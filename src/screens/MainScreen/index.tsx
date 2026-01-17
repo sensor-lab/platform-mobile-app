@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, View } from "react-native";
 import { useSelector } from "react-redux";
 import { ScreenNames } from "../../config";
-import { mixpanel, useTheme } from "../../hooks";
+import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
 import {
   MainContainer,
@@ -37,10 +37,6 @@ function MainScreen({ navigation }) {
   };
 
   const handleOpenLink = (link, heading) => {
-    mixpanel.track("Tile Card Clicked", {
-      tile: heading,
-      link,
-    });
     return Linking.openURL(link);
   };
 
@@ -85,7 +81,7 @@ function MainScreen({ navigation }) {
               <View style={styles.optionsSection}>
                 <View style={styles.leftView}>
                   <Text bold size={22} blackBold>
-                    Add Your {"\n"}First Printer
+                    添加第一个创意盒
                   </Text>
                   <Text
                     regular

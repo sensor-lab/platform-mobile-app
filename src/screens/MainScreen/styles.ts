@@ -3,7 +3,7 @@ import { SD } from "../../utils";
 
 export const styles = StyleSheet.create({
   sectionContainerStyles: {
-    height: SD.hp(179),
+    height: SD.hp(250),
     borderRadius: 20,
     flexDirection: "row",
     justifyContent: "space-between",

@@ -1,6 +1,6 @@
-import { Platform, StyleSheet } from "react-native";
-import { SD } from "../../utils";
+import { StyleSheet } from "react-native";
 import { Fonts, ThemeColors } from "../../styles";
+import { SD } from "../../utils";
 
 export const styles = StyleSheet.create({
   container: {
@@ -11,8 +11,8 @@ export const styles = StyleSheet.create({
     // borderWidth: 1,
   },
   logoStyles: {
-    width: SD.wp(167),
-    height: SD.hp(32),
+    width: SD.wp(255),
+    height: SD.hp(53),
     alignSelf: "center",
     flex: 1,
   },

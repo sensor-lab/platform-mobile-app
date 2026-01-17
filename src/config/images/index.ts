@@ -1,4 +1,6 @@
 const Images = {
+  homeScreenTitle: require("../../../assets/images/home_screen_title.png"),
+
   BackBtn: require("../../../assets/icons/backArrow.png"),
   NoResults: require("../../../assets/icons/NoResults.png"),
   // Splash: require("../../../assets/images/TestUser.png"),

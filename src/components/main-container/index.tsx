@@ -1,13 +1,14 @@
 import React, { ReactNode } from "react";
 import {
   Platform,
-  SafeAreaView,
   StatusBar,
   StyleProp,
   StyleSheet,
   View,
   ViewStyle,
 } from "react-native";
+
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
@@ -40,6 +41,7 @@ export const MainContainer: React.FC<MainContainerProps> = ({
     //   keyboardVerticalOffset={10}
     // >
     <SafeAreaView
+      edges={["left", "right", "bottom"]}
       style={[{ flex: 1, backgroundColor: AppTheme.Base }, mainContainerStyle]}
     >
       <StatusBar

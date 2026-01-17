@@ -54,10 +54,13 @@ export const MainHeader: React.FC<BackHeaderProps> = ({
             flexDirection: "row",
             width: "100%",
             alignItems: "center",
-            top: Platform.OS == "android" ? SD.hp(10) : 0,
+            top: Platform.OS == "android" ? SD.hp(20) : 0,
           }}
         >
-          <CustomImage source={Images.logo} style={styles.logoStyles} />
+          <CustomImage
+            source={Images.homeScreenTitle}
+            style={styles.logoStyles}
+          />
           {showPlusIcon && (
             <Pressable onPress={handleAddPrinter}>
               <CustomImage source={Images.plusIcon} style={styles.plusIcon} />

@@ -3,22 +3,22 @@ import { Platform } from "react-native";
 const ENFonts =
   Platform.OS === "android"
     ? {
-        BlackBold: "Lato-Black",
-        Bold: "Lato-Bold",
-        SemiBold: "Lato-Semibold",
-        Regular: "Lato-Regular",
-        Medium: "Lato-Medium",
-        LightItalic: "Lato-LightItalic",
-        Light: "Lato-Light",
+        BlackBold: "NotoSansSC-Black",
+        Bold: "NotoSansSC-Bold",
+        SemiBold: "NotoSansSC-SemiBold",
+        Regular: "NotoSansSC-Regular",
+        Medium: "NotoSansSC-Medium",
+        LightItalic: "NotoSansSC-Light",
+        Light: "NotoSansSC-Light",
       }
     : {
-        BlackBold: "Lato-Black",
-        Bold: "Lato-Bold",
-        SemiBold: "Lato-Semibold",
-        Regular: "Lato-Regular",
-        Medium: "Lato-Medium",
-        LightItalic: "Lato-LightItalic",
-        Light: "Lato-Light",
+        BlackBold: "NotoSansSC-Black",
+        Bold: "NotoSansSC-Bold",
+        SemiBold: "NotoSansSC-SemiBold",
+        Regular: "NotoSansSC-Regular",
+        Medium: "NotoSansSC-Medium",
+        LightItalic: "NotoSansSC-Light",
+        Light: "NotoSansSC-Light",
       };
 
 export { ENFonts };
