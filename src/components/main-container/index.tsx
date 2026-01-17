@@ -1,6 +1,5 @@
 import React, { ReactNode } from "react";
 import {
-  KeyboardAvoidingView,
   Platform,
   SafeAreaView,
   StatusBar,
@@ -13,7 +12,6 @@ import {
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
 import { ToucableFeedback } from "../toucableFeedback";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 type MainContainerProps = {
   children?: ReactNode;

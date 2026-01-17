@@ -1,17 +1,13 @@
 import React, { ReactNode } from "react";
 import {
   ColorValue,
-  SafeAreaView,
-  StatusBar,
   StyleProp,
   StyleSheet,
-  View,
-  ViewStyle,
+  ViewStyle
 } from "react-native";
 
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
-import { ToucableFeedback } from "../toucableFeedback";
 import { CardContainer } from "../card-container";
 
 type MainContainerProps = {

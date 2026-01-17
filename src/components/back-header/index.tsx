@@ -11,7 +11,7 @@ import {
   ViewProps,
   ViewStyle,
 } from "react-native";
-import { Images, NavigationService } from "../../config";
+import { Images } from "../../config";
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
 import Text from "../text";

@@ -18,12 +18,7 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
           <StatusBar style="dark" />
           <NavigationContainer>
-            <Stack.Navigator
-              screenOptions={{
-                headerShown: true,
-                headerTintColor: "#007AFF",
-              }}
-            >
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
               <Stack.Screen
                 name={ScreenNames.MainScreen}
                 component={MainScreen}

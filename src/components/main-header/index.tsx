@@ -1,19 +1,19 @@
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React from "react";
 import {
+  Platform,
+  Pressable,
   SafeAreaView,
+  Text,
   View,
   ViewStyle,
-  Pressable,
-  Text,
-  Platform,
 } from "react-native";
 import { Images, ScreenNames } from "../../config";
 import { useTheme } from "../../hooks";
+import { SD } from "../../utils";
 import { CustomImage } from "../custom-image";
 import { styles } from "./styles";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { SD } from "../../utils";
 
 type BackHeaderProps = {
   back?: boolean;
