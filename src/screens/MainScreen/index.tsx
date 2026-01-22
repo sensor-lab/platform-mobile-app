@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, View } from "react-native";
 import { useSelector } from "react-redux";
-import { ScreenNames } from "../../config";
+import { Images, ScreenNames } from "../../config";
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
 import {
+  CustomImage,
   MainContainer,
   MainHeader,
   PrimaryButton,
@@ -33,7 +34,7 @@ function MainScreen({ navigation }) {
   }, [printerDetailsByIp]);
 
   const handleAddNow = () => {
-    navigation.navigate(ScreenNames.MainScreen);
+    navigation.navigate(ScreenNames.PlatformSetupScreen);
   };
 
   const handleOpenLink = (link, heading) => {
@@ -91,19 +92,19 @@ function MainScreen({ navigation }) {
                     topSpacing={10}
                     bottomSpacing={10}
                   >
-                    Add Your printer add see the listing of your printer fast
+                    添加第一个创意盒，在这里可以看到所有设备
                   </Text>
                   <PrimaryButton
-                    title="+ Add Now"
+                    title="+ 添加"
                     fontSize={12}
                     customStyles={styles.AddNowBtn}
                     onPress={handleAddNow}
                   />
                 </View>
-                {/* <CustomImage
-                  source={Images.printer}
+                <CustomImage
+                  source={Images.platform}
                   style={styles.printerImage}
-                /> */}
+                />
               </View>
             )}
           </SectionContainer>

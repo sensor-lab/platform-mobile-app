@@ -1,5 +1,10 @@
 const Images = {
   homeScreenTitle: require("../../../assets/images/home_screen_title.png"),
+  platform: require("../../../assets/images/platform.png"),
+  instructions: require("./../../../assets/icons/instructions.png"),
+  helpAndSupport: require("./../../../assets/icons/help_and_support.png"),
+  aboutSensorsparks: require("./../../../assets/icons/about_sensorsparks.png"),
+  code: require("./../../../assets/icons/code.png"),
 
   BackBtn: require("../../../assets/icons/backArrow.png"),
   NoResults: require("../../../assets/icons/NoResults.png"),
@@ -9,9 +14,6 @@ const Images = {
   // printer: require("./../../../assets/images/printer.png"),
   buySupplies: require("./../../../assets/icons/buy_supplies.png"),
   buyPrinters: require("./../../../assets/icons/buy_printer.png"),
-  instructions: require("./../../../assets/icons/instructions.png"),
-  helpAndSupport: require("./../../../assets/icons/help_and_support.png"),
-  aboutCognitive: require("./../../../assets/icons/about_cognitive.png"),
   addPrinterToComputer: require("./../../../assets/icons/add_printer_to_computer.png"),
   // printer2: require("./../../../assets/images/printer2.png"),
   power: require("./../../../assets/icons/power.png"),

@@ -10,7 +10,8 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   leftView: {
-    width: "50%",
+    // width: "50%",
+    flex: 1,
   },
   AddNowBtn: {
     width: SD.wp(96),
@@ -26,7 +27,7 @@ export const styles = StyleSheet.create({
     marginTop: SD.hp(20),
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     // borderWidth: 1,
     // alignContent:'space-around'
   },

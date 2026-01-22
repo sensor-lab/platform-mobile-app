@@ -7,7 +7,7 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { ScreenNames } from "./src/config";
 import { persistor, store } from "./src/redux";
-import { MainScreen } from "./src/screens";
+import { MainScreen, PlatformSetupScreen } from "./src/screens";
 
 const Stack = createNativeStackNavigator();
 const queryClient = new QueryClient();
@@ -24,6 +24,10 @@ export default function App() {
                 <Stack.Screen
                   name={ScreenNames.MainScreen}
                   component={MainScreen}
+                />
+                <Stack.Screen
+                  name={ScreenNames.PlatformSetupScreen}
+                  component={PlatformSetupScreen}
                 />
               </Stack.Navigator>
             </NavigationContainer>

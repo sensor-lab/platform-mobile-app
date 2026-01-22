@@ -2,39 +2,27 @@ import { Images } from "../../../config";
 
 export const opetionsData = [
   {
-    icon: Images.buySupplies,
-    heading: "Buy Supplies",
-    subHeading: "Add Your printer add see the listing of your printer fast",
-    link: "https://www.cognitivetpg.com",
-  },
-  {
-    icon: Images.buyPrinters,
-    heading: "Buy Printers",
-    subHeading: "Add Your printer add see the listing of your printer fast",
-    link: "https://www.cognitivetpg.com",
-  },
-  {
     icon: Images.instructions,
-    heading: "Instructions",
-    subHeading: "Add Your printer add see the listing of your printer fast",
-    link: "https://www.cognitivetpg.com",
+    heading: "文档",
+    subHeading: "详细的平台文档帮助您和千万外设交互",
+    link: "https://www.sensorsparks.com",
   },
   {
     icon: Images.helpAndSupport,
-    heading: "Help & Support",
-    subHeading: "Add Your printer add see the listing of your printer fast",
-    link: "https://www.cognitivetpg.com",
+    heading: "帮助",
+    subHeading: "寻求帮助解决您遇到的平台问题",
+    link: "https://www.sensorsparks.com",
   },
   {
-    icon: Images.addPrinterToComputer,
-    heading: "Add Printer to Computer",
-    subHeading: "Add Your printer add see the listing of your printer fast",
-    link: "https://www.cognitivetpg.com",
+    icon: Images.code,
+    heading: "代码",
+    subHeading: "访问创意盒开源代码",
+    link: "https://www.sensorsparks.com",
   },
   {
-    icon: Images.aboutCognitive,
-    heading: "About Cognitive",
-    subHeading: "Add Your printer add see the listing of your printer fast",
-    link: "https://www.cognitivetpg.com",
+    icon: Images.aboutSensorsparks,
+    heading: "关于创意盒",
+    subHeading: "介绍创意盒",
+    link: "https://www.sensorsparks.com",
   },
 ];

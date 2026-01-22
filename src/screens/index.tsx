@@ -1,2 +1,4 @@
 import MainScreen from "./MainScreen";
-export { MainScreen };
+import PlatformSetupScreen from "./PlatformSetupScreen";
+
+export { MainScreen, PlatformSetupScreen };
