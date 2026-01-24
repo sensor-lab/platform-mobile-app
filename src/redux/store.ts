@@ -6,9 +6,7 @@ import { rootReducer } from "./reducers";
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
-  whitelist: ["printer"],
-  // whitelist: ['auth', 'dropdownData'],
-  //   whitelist: ["theme", "auth",],
+  whitelist: ["platform"],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

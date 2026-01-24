@@ -1,1 +1,1 @@
-export * from "./usePrinter";
+export * from "./usePlatform";

@@ -1,6 +1,10 @@
-import { TopicType, WebsocketService } from "@/src/services/payload_service";
+import { ScreenNames } from "@/src/config";
+import { setPlatformDetailsById } from "@/src/redux/reducers";
+import { WebsocketService } from "@/src/services/payload_service";
+import { toast } from "@/src/utils/toast.utils";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 import {
   CustomTextInput,
   InfoFieldComp,
@@ -12,13 +16,14 @@ import {
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
 
-const PlatformSetupScreen = ({ route }) => {
+const PlatformSetupScreen = ({ navigation, route }) => {
   const [platformID, setPlatformID] = useState("");
-
   const { AppTheme } = useTheme();
-  const [loading, setLoading] = useState(null);
+  const [loading, setLoading] = useState<string | null>(null);
+  const dispatch = useDispatch();
+  const { platformDetailsByID } = useSelector((state: any) => state.platform);
 
-  const targetWebSocket1 = "wss://iot.sensorsparks.com:8080/testapi";
+  const url = "wss://iot.sensorsparks.com:8080/testapi";
 
   useEffect(() => {
     // mixpanel.track("Printer Nested Setting Page");
@@ -28,30 +33,56 @@ const PlatformSetupScreen = ({ route }) => {
     console.log(`Test connection for ${platformID}`);
     const dev = "9888e0926afc";
     const payload = '{"event":"now","actions":[["gpio", "led", "output", 2]]}';
-    const ws = new WebsocketService(targetWebSocket1);
-    const respTopic = `platform.ephemeral.${dev}-${ws.getTxid()}`;
-    await ws.connect();
-    const subResp = await ws.sendSubscribe(
-      respTopic,
-      respTopic,
-      "",
-      "",
-      TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
-    );
-    console.log(`subResp: ${subResp.length}`);
-    const cmdResp = await ws.sendCommand(dev, payload);
-    console.log(`cmdResp: ${cmdResp.length}`);
-    const waitResp = await ws.waitForResponse();
-    console.log(`waitResp: ${waitResp.length}`);
-    const unsubResp = await ws.sendUnsubscribe(
-      respTopic,
-      respTopic,
-      "",
-      "",
-      TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
-    );
-    console.log(`unsubResp: ${unsubResp.length}`);
+    const ws = new WebsocketService(url);
+    setLoading("连接测试中");
+    try {
+      await ws.connect();
+      await ws.executeCommand(dev, payload);
+      toast.success("成功翻转绿色创意盒LED灯");
+    } catch (err) {
+      toast.fail("失败", "测试连接失败");
+    }
+    setLoading(null);
     ws.close();
+  };
+
+  const handleAddDevice = async () => {
+    const dev = "9888e0926afc";
+    const ws = new WebsocketService(url);
+    setLoading("连接并添加平台中");
+    try {
+      await ws.connect();
+      const status = await ws.queryStatus(dev);
+      const config = await ws.queryConfig(dev);
+      const statusConfig = {
+        ...status,
+        ...config,
+      };
+      toast.success(`成功添加平台${dev}`);
+
+      dispatch(
+        setPlatformDetailsById({
+          id: dev,
+          details: {
+            id: dev,
+            mdnsName: statusConfig.mdns,
+            fwVersion: statusConfig.fwver,
+            hardwareVersion: statusConfig.hwver,
+            voltage: statusConfig.voltage,
+            status: statusConfig.status,
+          },
+        }),
+      );
+
+      navigation.replace(ScreenNames.MainScreen, {
+        setup: "completed",
+      });
+    } catch (err) {
+      toast.fail("失败,请重试");
+    } finally {
+      setLoading(null);
+      ws.close();
+    }
   };
 
   // const handleSetValues = async () => {
@@ -130,10 +161,10 @@ const PlatformSetupScreen = ({ route }) => {
       <PrimaryButton
         title="添加"
         customStyles={{ marginVertical: 0 }}
-        // onPress={null}
+        onPress={handleAddDevice}
       />
       <PrimaryButton title="测试连接" onPress={handleTestConnection} />
-      <Loader visible={!!loading} text="loading!" />
+      <Loader visible={!!loading} text={loading} />
     </MainContainer>
   );
 };

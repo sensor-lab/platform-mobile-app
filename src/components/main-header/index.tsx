@@ -36,7 +36,7 @@ export const MainHeader: React.FC<BackHeaderProps> = ({
 
   const handleGoBack = () => navigation.goBack();
   const handleAddPrinter = () =>
-    navigation.navigate(ScreenNames.PrinterSetupScreen);
+    navigation.navigate(ScreenNames.PlatformSetupScreen);
 
   return (
     <SafeAreaView

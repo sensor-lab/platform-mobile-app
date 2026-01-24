@@ -4,8 +4,8 @@
 //   toast as toasts,
 // } from '@backpackapp-io/react-native-toast';
 // import {ThemeColors} from '../styles';
-import Toast from "react-native-toast-message";
 import { Alert } from "react-native";
+import Toast from "react-native-toast-message";
 
 // function successSnack(message: string) {
 //   Snackbar.show({
@@ -46,12 +46,12 @@ function fail(
   message: string,
   message2?: string,
   isAlert?: boolean,
-  alertTitle?: string
+  alertTitle?: string,
 ) {
   if (isAlert) {
     Alert.alert(
       alertTitle ? `Error (${alertTitle})` : "Error",
-      message || "Something Went Wrong"
+      message || "Something Went Wrong",
     );
   } else {
     Toast.show({

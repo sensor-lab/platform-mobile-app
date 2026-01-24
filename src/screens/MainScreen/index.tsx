@@ -18,11 +18,11 @@ import { styles } from "./styles";
 
 function MainScreen({ navigation }) {
   const { AppTheme } = useTheme();
-  const { printerDetailsByIp } = useSelector((state: any) => state.printer);
+  const { platformDetailsByID } = useSelector((state: any) => state.platform);
   const [setup, setSetup] = useState([]);
   const [showRemoveButton, setShowRemoveButton] = useState(null);
   useEffect(() => {
-    const sortedPrinters: any = [...Object.values(printerDetailsByIp)].sort(
+    const sortedPlatforms: any = [...Object.values(platformDetailsByID)].sort(
       (a: any, b: any) => {
         if (a.Status === "Connected" && b.Status !== "Connected") return -1;
         if (a.Status !== "Connected" && b.Status === "Connected") return 1;
@@ -30,8 +30,8 @@ function MainScreen({ navigation }) {
         return a.HostName.localeCompare(b.HostName);
       },
     );
-    setSetup(sortedPrinters);
-  }, [printerDetailsByIp]);
+    setSetup(sortedPlatforms);
+  }, [platformDetailsByID]);
 
   const handleAddNow = () => {
     navigation.navigate(ScreenNames.PlatformSetupScreen);

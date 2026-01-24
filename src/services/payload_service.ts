@@ -15,8 +15,9 @@ import {
 } from "./flatbuffersmsg";
 
 enum CommandType {
-  CommandTypeHardwareOperation = 900,
-  CommandTypeStatusQuery = 910,
+  HardwareOperation = 900,
+  StatusQuery = 910,
+  ConfigQuery = 920,
 }
 
 enum TopicType {
@@ -94,21 +95,20 @@ class WebsocketService {
         txid = bytes ? new TextDecoder("utf-8").decode(bytes) : "";
       }
     } else {
-      console.log("none command message");
       const bytes = envelope.txidArray();
       txid = bytes ? new TextDecoder("utf-8").decode(bytes) : "";
     }
 
     console.log(`Received binary message, txid: ${txid} topic: ${topic}`);
 
-    const pending = this.pending.get(txid);
+    const pending = this.pending.get("xyz");
     if (!pending) {
       console.warn("Unmatched WS message:", txid);
       return;
     }
 
     clearTimeout(pending.timeout);
-    this.pending.delete(txid);
+    this.pending.delete("xyz");
     pending.resolve(base64ToUint8(data));
   };
 
@@ -316,12 +316,12 @@ class WebsocketService {
     );
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pending.delete(this.txid);
+        this.pending.delete("xyz");
         reject(new Error("WebSocket response timeout"));
       }, timeoutMs);
 
       try {
-        this.pending.set(this.txid, { resolve, reject, timeout });
+        this.pending.set("xyz", { resolve, reject, timeout });
         const cmdStr = uint8ToBase64(subscribe);
         this.ws.send(cmdStr);
       } catch (e) {
@@ -349,12 +349,12 @@ class WebsocketService {
     );
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pending.delete(this.txid);
+        this.pending.delete("xyz");
         reject(new Error("WebSocket response timeout"));
       }, timeoutMs);
 
       try {
-        this.pending.set(this.txid, { resolve, reject, timeout });
+        this.pending.set("xyz", { resolve, reject, timeout });
         const cmdStr = uint8ToBase64(unsubscribe);
         this.ws.send(cmdStr);
       } catch (e) {
@@ -365,6 +365,7 @@ class WebsocketService {
 
   public sendCommand(
     deviceID: string,
+    cmdType: CommandType,
     payload: string,
     timeoutMs: number = 5000,
   ): Promise<Uint8Array> {
@@ -374,7 +375,7 @@ class WebsocketService {
     const command = this.constructCommand(
       cmdTopic,
       messageID,
-      CommandType.CommandTypeHardwareOperation.valueOf(),
+      cmdType.valueOf(),
       payload,
       this.deviceType,
       deviceID,
@@ -388,12 +389,12 @@ class WebsocketService {
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pending.delete(this.txid);
+        this.pending.delete("xyz");
         reject(new Error("WebSocket response timeout"));
       }, timeoutMs);
 
       try {
-        this.pending.set(this.txid, { resolve, reject, timeout });
+        this.pending.set("xyz", { resolve, reject, timeout });
         const cmdStr = uint8ToBase64(command);
         this.ws.send(cmdStr);
       } catch (e) {
@@ -405,12 +406,12 @@ class WebsocketService {
   public waitForResponse(timeoutMs: number = 5000): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pending.delete(this.txid);
+        this.pending.delete("xyz");
         reject(new Error("WebSocket response timeout"));
       }, timeoutMs);
 
       try {
-        this.pending.set(this.txid, { resolve, reject, timeout });
+        this.pending.set("xyz", { resolve, reject, timeout });
       } catch (e) {
         console.log(`send command exception in promise:`, e);
       }
@@ -419,6 +420,143 @@ class WebsocketService {
 
   public getTxid(): string {
     return this.txid;
+  }
+
+  public async executeCommand(
+    devID: string,
+    payload: string,
+  ): Promise<Uint8Array> {
+    const respTopic = `platform.ephemeral.${devID}-${this.txid}`;
+    const subResp = await this.sendSubscribe(
+      respTopic,
+      respTopic,
+      "",
+      "",
+      TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
+    );
+    console.log(`subResp: ${subResp.length}`);
+    const cmdResp = await this.sendCommand(
+      devID,
+      CommandType.HardwareOperation,
+      payload,
+    );
+    console.log(`cmdResp: ${cmdResp.length}`);
+    const waitResp = await this.waitForResponse();
+    console.log(`waitResp: ${waitResp.length}`);
+    return this.sendUnsubscribe(
+      respTopic,
+      respTopic,
+      "",
+      "",
+      TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
+    );
+  }
+
+  public async queryStatus(devID: string): Promise<{ status: number[] }> {
+    const respTopic = `platform.ephemeral.${devID}-${this.txid}`;
+    const subResp = await this.sendSubscribe(
+      respTopic,
+      respTopic,
+      "",
+      "",
+      TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
+    );
+    console.log(`subResp: ${subResp.length}`);
+    const cmdResp = await this.sendCommand(devID, CommandType.StatusQuery, "");
+    console.log(`cmdResp: ${cmdResp.length}`);
+    const waitResp = await this.waitForResponse();
+    console.log(`waitResp: ${waitResp.length}`);
+
+    const bb = new flatbuffers.ByteBuffer(waitResp);
+    const envelope = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(bb);
+    let status = "";
+    if (envelope.messageType() == Message.FlatbuffersCommand) {
+      const cmd: FlatbuffersCommand = envelope.message(
+        new FlatbuffersCommand(),
+      );
+      const payloadBytes = cmd.payloadArray();
+      status = payloadBytes
+        ? new TextDecoder("utf-8").decode(payloadBytes)
+        : "";
+    }
+
+    await this.sendUnsubscribe(
+      respTopic,
+      respTopic,
+      "",
+      "",
+      TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
+    );
+
+    return new Promise((resolve, reject) => {
+      if (status.length > 0) {
+        try {
+          resolve(JSON.parse(status));
+        } catch (e) {
+          reject(new Error(`failed to parse json from ${status}`));
+        }
+      } else {
+        reject(new Error(`does not receive valid status`));
+      }
+    });
+  }
+
+  public async queryConfig(devID: string): Promise<{
+    ssid: string;
+    voltage: number;
+    mdns: string;
+    fwver: string;
+    hwver: string;
+    tmzoneoffset: number;
+    rssi: number;
+  }> {
+    const respTopic = `platform.ephemeral.${devID}-${this.txid}`;
+    const subResp = await this.sendSubscribe(
+      respTopic,
+      respTopic,
+      "",
+      "",
+      TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
+    );
+    console.log(`subResp: ${subResp.length}`);
+    const cmdResp = await this.sendCommand(devID, CommandType.ConfigQuery, "");
+    console.log(`cmdResp: ${cmdResp.length}`);
+    const waitResp = await this.waitForResponse();
+    console.log(`waitResp: ${waitResp.length}`);
+
+    const bb = new flatbuffers.ByteBuffer(waitResp);
+    const envelope = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(bb);
+    let config = "";
+    if (envelope.messageType() == Message.FlatbuffersCommand) {
+      const cmd: FlatbuffersCommand = envelope.message(
+        new FlatbuffersCommand(),
+      );
+      const payloadBytes = cmd.payloadArray();
+      config = payloadBytes
+        ? new TextDecoder("utf-8").decode(payloadBytes)
+        : "";
+      console.log(`config: ${config}`);
+    }
+
+    const unsubResp = this.sendUnsubscribe(
+      respTopic,
+      respTopic,
+      "",
+      "",
+      TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
+    );
+
+    return new Promise((resolve, reject) => {
+      if (config.length > 0) {
+        try {
+          resolve(JSON.parse(config));
+        } catch (e) {
+          reject(new Error(`failed to parse json from ${config}`));
+        }
+      } else {
+        reject(new Error(`does not receive valid config`));
+      }
+    });
   }
 }
 
