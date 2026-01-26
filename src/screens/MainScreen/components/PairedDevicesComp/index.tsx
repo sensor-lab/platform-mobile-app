@@ -1,12 +1,20 @@
-import { removePlatformByID, updateDeviceStatus } from "@/src/redux/reducers";
+import { ScreenNames } from "@/src/config";
+import {
+  ConnectStatus,
+  PlatformDetails,
+  removePlatformByID,
+} from "@/src/redux/reducers";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import { useDispatch } from "react-redux";
 import { CustomImage, Text } from "../../../../components";
 import { Images } from "../../../../config";
-import { usePlatform, useTheme } from "../../../../hooks";
+import {
+  usePlatform,
+  useSyncPlatformStatus,
+  useTheme,
+} from "../../../../hooks";
 import { styles } from "./styles";
 
 const PairedDevicesComp = ({
@@ -14,53 +22,42 @@ const PairedDevicesComp = ({
   showRemoveButton,
   setShowRemoveButton,
 }: {
-  data: any;
+  data: PlatformDetails;
   showRemoveButton: any;
   setShowRemoveButton: any;
 }) => {
   const { AppTheme } = useTheme();
-  const { id, mdnsName, status } = data;
+  const { id, mdnsName, platformStatus, connectStatus } = data;
   const dispatch = useDispatch();
-  const [isDisconnected, setIsDisconnected] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const queryPlatform = usePlatform(id, status);
+  const queryPlatform = usePlatform(id);
   const handleNavigation = () => {
     setShowRemoveButton(null);
-    // navigation.navigate(ScreenNames.PrinterSettingScreen, { IP_Address });
+    navigation.navigate(ScreenNames.PlatformSettingScreen, { id });
   };
 
-  useEffect(() => {
-    if (queryPlatform.isError) {
-      // cannot reach to device
-      setIsDisconnected(true);
-      return;
-    } else {
-      setIsDisconnected(false);
-    }
-
-    if (!queryPlatform.data) return;
-    dispatch(
-      updateDeviceStatus({
-        id,
-        status: queryPlatform.data.status,
-      }),
-    );
-  }, [queryPlatform.data, queryPlatform.isError, id, dispatch]);
+  useSyncPlatformStatus(id, {
+    data: queryPlatform.data,
+    isError: queryPlatform.isError,
+  });
 
   const handleRemovePlatform = () => {
     dispatch(removePlatformByID(id));
   };
 
   // TODO: better parse status array
-  const { colorOnStatusChange, statusName } = isDisconnected
-    ? { colorOnStatusChange: AppTheme.fontGray, statusName: "离线" }
-    : status.length == 0
-      ? { colorOnStatusChange: AppTheme.lightGreen, statusName: "正常" }
-      : status.length == 1
-        ? { colorOnStatusChange: AppTheme.Yellow, statusName: "警告" }
-        : status.length == 2
-          ? { colorOnStatusChange: AppTheme.Red, statusName: "错误" }
-          : { colorOnStatusChange: AppTheme.fontGray, statusName: "未知" };
+  const { colorOnStatusChange, statusName } =
+    connectStatus == ConnectStatus.DeviceDown
+      ? { colorOnStatusChange: AppTheme.fontGray, statusName: "设备离线" }
+      : connectStatus == ConnectStatus.CloudServerDown
+        ? { colorOnStatusChange: AppTheme.fontGray, statusName: "服务器异常" }
+        : platformStatus.length == 0
+          ? { colorOnStatusChange: AppTheme.lightGreen, statusName: "正常" }
+          : platformStatus.length == 1
+            ? { colorOnStatusChange: AppTheme.Yellow, statusName: "警告" }
+            : platformStatus.length == 2
+              ? { colorOnStatusChange: AppTheme.Red, statusName: "错误" }
+              : { colorOnStatusChange: AppTheme.fontGray, statusName: "未知" };
 
   return (
     <View
@@ -68,7 +65,7 @@ const PairedDevicesComp = ({
         styles.container,
         {
           backgroundColor: AppTheme.White,
-          opacity: isDisconnected ? 0.6 : 1,
+          opacity: connectStatus != ConnectStatus.Online ? 0.6 : 1,
           // opacity: 0.2,
         },
       ]}
@@ -97,7 +94,11 @@ const PairedDevicesComp = ({
           <Text
             bold
             size={12}
-            color={isDisconnected ? AppTheme.fontGray : AppTheme.Black}
+            color={
+              connectStatus != ConnectStatus.Online
+                ? AppTheme.fontGray
+                : AppTheme.Black
+            }
             style={{ textTransform: "uppercase" }}
           >
             {mdnsName}
@@ -123,12 +124,16 @@ const PairedDevicesComp = ({
           <Text
             bold
             size={10}
-            color={isDisconnected ? AppTheme.fontGray : AppTheme.Black}
+            color={
+              connectStatus != ConnectStatus.Online
+                ? AppTheme.fontGray
+                : AppTheme.Black
+            }
             centered
           >
             {/* {connected} */}
             {/* {Status ? "Connected" : "Disconnected"} */}
-            {statusName == "离线" ? "未连接" : "已连接"}
+            {connectStatus == ConnectStatus.Online ? "已连接" : "未连接"}
           </Text>
         </View>
         <Pressable onPress={() => setShowRemoveButton(id)}>

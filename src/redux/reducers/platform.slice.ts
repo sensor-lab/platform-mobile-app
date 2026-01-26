@@ -1,12 +1,19 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-type PlatformDetails = {
+export enum ConnectStatus {
+  Online = "online",
+  DeviceDown = "devicedown",
+  CloudServerDown = "serverdown",
+}
+
+export type PlatformDetails = {
   id: string;
   mdnsName: string;
   fwVersion: string;
   hardwareVersion: string;
   voltage: number;
-  status: number[];
+  platformStatus: number[];
+  connectStatus: ConnectStatus;
 };
 
 export type PlatformStateType = {
@@ -38,7 +45,7 @@ const platformSlice = createSlice({
       state.selectedPlatform = action.payload;
     },
 
-    updateDeviceStatus: (
+    updatePlatformStatus: (
       state,
       action: PayloadAction<{ id: string; status: number[] }>,
     ) => {
@@ -46,7 +53,16 @@ const platformSlice = createSlice({
 
       if (!state.platformDetailsByID[id]) return;
 
-      state.platformDetailsByID[id].status = status;
+      state.platformDetailsByID[id].platformStatus = status;
+    },
+
+    updateConnectStatus: (
+      state,
+      action: PayloadAction<{ id: string; status: ConnectStatus }>,
+    ) => {
+      const { id, status } = action.payload;
+      if (!state.platformDetailsByID[id]) return;
+      state.platformDetailsByID[id].connectStatus = status;
     },
 
     removePlatformByID: (state, action: PayloadAction<string>) => {
@@ -62,7 +78,8 @@ export const {
   setPlatformDetailsById,
   setSelectedPlatform,
   removePlatformByID,
-  updateDeviceStatus,
+  updatePlatformStatus,
+  updateConnectStatus,
 } = platformSlice.actions;
 
 export default platformSlice.reducer;

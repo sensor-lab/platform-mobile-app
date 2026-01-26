@@ -1,9 +1,12 @@
 import { combineReducers } from "redux";
 import platformReducer, {
+  ConnectStatus,
+  PlatformDetails,
   removePlatformByID,
   setPlatformDetailsById,
   setSelectedPlatform,
-  updateDeviceStatus,
+  updateConnectStatus,
+  updatePlatformStatus,
 } from "./platform.slice";
 
 export const rootReducer = combineReducers({
@@ -11,10 +14,13 @@ export const rootReducer = combineReducers({
 });
 
 export {
+  ConnectStatus,
+  PlatformDetails,
   platformReducer,
   removePlatformByID,
   setPlatformDetailsById,
   setSelectedPlatform,
-  updateDeviceStatus
+  updateConnectStatus,
+  updatePlatformStatus
 };
 

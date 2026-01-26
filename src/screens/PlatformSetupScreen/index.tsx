@@ -1,5 +1,5 @@
 import { ScreenNames } from "@/src/config";
-import { setPlatformDetailsById } from "@/src/redux/reducers";
+import { ConnectStatus, setPlatformDetailsById } from "@/src/redux/reducers";
 import { WebsocketService } from "@/src/services/payload_service";
 import { toast } from "@/src/utils/toast.utils";
 import { useEffect, useState } from "react";
@@ -69,7 +69,8 @@ const PlatformSetupScreen = ({ navigation, route }) => {
             fwVersion: statusConfig.fwver,
             hardwareVersion: statusConfig.hwver,
             voltage: statusConfig.voltage,
-            status: statusConfig.status,
+            platformStatus: statusConfig.status,
+            connectStatus: ConnectStatus.Online,
           },
         }),
       );
