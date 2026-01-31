@@ -8,12 +8,15 @@ type Props = {
   title: string;
   value?: string | number;
   children?: ReactNode;
+  height?: number;
 };
 
-const InfoFieldComp: React.FC<Props> = ({ title, value, children }) => {
+const InfoFieldComp: React.FC<Props> = ({ title, value, height, children }) => {
   const { AppTheme } = useTheme();
   return (
-    <SectionContainer containerStyles={styles.container}>
+    <SectionContainer
+      containerStyles={{ ...styles.container, ...(height && { height }) }}
+    >
       <Text bold size={14} color={AppTheme.Black}>
         {title}
       </Text>

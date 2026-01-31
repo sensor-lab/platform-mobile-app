@@ -10,7 +10,7 @@ export enum ThemeColors {
   Transparent = "rgba(255, 255, 255, 0)",
   OverlayColor = "rgba(52, 52, 52, 0.8)",
   Yellow = "#FFD500",
-  LightGray = "#5808E30D",
+  LightGray = "#7B8AA8",
   JetBlack = "#303030",
   Gray = "#776B8D",
   SecondaryPrimay = "#362A51",

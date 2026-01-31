@@ -1,4 +1,6 @@
-import { ScreenNames } from "@/src/config";
+import { CustomImage, Text } from "@/src/components";
+import { Images, ScreenNames } from "@/src/config";
+import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
 import {
   ConnectStatus,
   PlatformDetails,
@@ -8,13 +10,6 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Pressable, View } from "react-native";
 import { useDispatch } from "react-redux";
-import { CustomImage, Text } from "../../../../components";
-import { Images } from "../../../../config";
-import {
-  usePlatform,
-  useSyncPlatformStatus,
-  useTheme,
-} from "../../../../hooks";
 import { styles } from "./styles";
 
 const PairedDevicesComp = ({
@@ -30,12 +25,12 @@ const PairedDevicesComp = ({
   const { id, mdnsName, platformStatus, connectStatus } = data;
   const dispatch = useDispatch();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const queryPlatform = usePlatform(id);
   const handleNavigation = () => {
     setShowRemoveButton(null);
     navigation.navigate(ScreenNames.PlatformSettingScreen, { id });
   };
 
+  const queryPlatform = usePlatform(id);
   useSyncPlatformStatus(id, {
     data: queryPlatform.data,
     isError: queryPlatform.isError,
@@ -45,7 +40,6 @@ const PairedDevicesComp = ({
     dispatch(removePlatformByID(id));
   };
 
-  // TODO: better parse status array
   const { colorOnStatusChange, statusName } =
     connectStatus == ConnectStatus.DeviceDown
       ? { colorOnStatusChange: AppTheme.fontGray, statusName: "设备离线" }

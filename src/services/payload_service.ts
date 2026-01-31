@@ -422,10 +422,7 @@ class WebsocketService {
     return this.txid;
   }
 
-  public async executeCommand(
-    devID: string,
-    payload: string,
-  ): Promise<Uint8Array> {
+  public async executeCommand(devID: string, payload: string): Promise<string> {
     const respTopic = `platform.ephemeral.${devID}-${this.txid}`;
     const subResp = await this.sendSubscribe(
       respTopic,
@@ -443,13 +440,39 @@ class WebsocketService {
     console.log(`cmdResp: ${cmdResp.length}`);
     const waitResp = await this.waitForResponse();
     console.log(`waitResp: ${waitResp.length}`);
-    return this.sendUnsubscribe(
+
+    const bb = new flatbuffers.ByteBuffer(waitResp);
+    const envelope = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(bb);
+    let operationResponse = "";
+    if (envelope.messageType() == Message.FlatbuffersCommand) {
+      const cmd: FlatbuffersCommand = envelope.message(
+        new FlatbuffersCommand(),
+      );
+      const payloadBytes = cmd.payloadArray();
+      operationResponse = payloadBytes
+        ? new TextDecoder("utf-8").decode(payloadBytes)
+        : "";
+    }
+
+    await this.sendUnsubscribe(
       respTopic,
       respTopic,
       "",
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
+
+    return new Promise((resolve, reject) => {
+      if (operationResponse.length > 0) {
+        try {
+          resolve(operationResponse);
+        } catch (e) {
+          reject(new Error(`failed to parse json from ${operationResponse}`));
+        }
+      } else {
+        reject(new Error(`does not receive valid status`));
+      }
+    });
   }
 
   public async queryStatus(devID: string): Promise<{ status: number[] }> {

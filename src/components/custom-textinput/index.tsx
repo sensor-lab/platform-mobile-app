@@ -1,20 +1,19 @@
+import React from "react";
 import {
   ColorValue,
   ImageSourcePropType,
   KeyboardTypeOptions,
   Pressable,
-  StyleProp,
   TextInput,
   TextStyle,
   View,
   ViewStyle,
 } from "react-native";
-import { styles } from "./styles";
-import React from "react";
 import { useTheme } from "../../hooks";
 import { Fonts } from "../../styles";
 import { SD } from "../../utils";
 import { CustomImage } from "../custom-image";
+import { styles } from "./styles";
 
 type Props = {
   placeholder?: string;
@@ -109,10 +108,10 @@ export const CustomTextInput: React.FC<Props> = ({
             fontFamily: bold
               ? Fonts["Bold"]
               : regular
-              ? Fonts["Regular"]
-              : medium
-              ? Fonts["Medium"]
-              : Fonts["SemiBold"],
+                ? Fonts["Regular"]
+                : medium
+                  ? Fonts["Medium"]
+                  : Fonts["SemiBold"],
             flex: 1,
           },
           style,

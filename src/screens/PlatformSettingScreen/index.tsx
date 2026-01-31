@@ -1,6 +1,3 @@
-import { useEffect, useState } from "react";
-import { Pressable, View } from "react-native";
-import { useSelector } from "react-redux";
 import {
   CustomDropdown,
   CustomImage,
@@ -12,16 +9,20 @@ import {
   PrimaryButton,
   SectionContainer,
   Text,
-} from "../../components";
-import { Images, ScreenNames } from "../../config";
-import { useTheme } from "../../hooks";
+} from "@/src/components";
+import { Images, ScreenNames } from "@/src/config";
+import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
+import { ConnectStatus } from "@/src/redux/reducers";
+import { useEffect, useState } from "react";
+import { Linking, Pressable, View } from "react-native";
+import { useSelector } from "react-redux";
 import { RootState } from "../../redux";
 import { SD } from "../../utils";
 import { PrinterSettingScreenCard } from "./components";
 import { cardsDummyData } from "./extra";
 import { styles } from "./styles";
 
-const PrinterSettingScreen = ({ navigation, route }) => {
+const PlatformSettingScreen = ({ navigation, route }) => {
   const id = route?.params?.id;
   const [loading, setLoading] = useState("");
   const platformDetail = useSelector(
@@ -34,6 +35,12 @@ const PrinterSettingScreen = ({ navigation, route }) => {
       navigation.goBack();
     }
   }, [platformDetail, navigation]);
+
+  const queryPlatform = usePlatform(id);
+  useSyncPlatformStatus(id, {
+    data: queryPlatform.data,
+    isError: queryPlatform.isError,
+  });
 
   // const { refetch, isFetching, isLoading } = usePrinter(
   //   IP_Address,
@@ -54,29 +61,16 @@ const PrinterSettingScreen = ({ navigation, route }) => {
 
   const { AppTheme } = useTheme();
   const handleClick = (el) => {
-    switch (el.title.toLowerCase()) {
-      case "network information":
-        navigation.navigate(ScreenNames.NetworkInformationScreen, {
-          IP_Address,
+    switch (el.title) {
+      case "测试应用":
+        navigation.navigate(ScreenNames.TestAppScreen, {
+          id,
         });
         break;
-      case "start calibration":
+      case "HTTP服务器":
         // handlePrinterSetting("calibrate");
-        setShowCalibrationModal(true);
-        break;
-      case "print diagnostic label":
-        // console.log(el.title);
-        handlePrinterSetting(
-          "scripttransfer",
-          undefined,
-          "!PRINT TESTLABEL\r\n",
-        );
-        break;
-      case "print test label":
-        handleTestPrint();
-        break;
-      case "factory reset":
-        navigation.navigate(ScreenNames.FactoryResetScreen, { IP_Address });
+        // setShowCalibrationModal(true);
+        Linking.openURL("http://192.168.1.24");
         break;
       default:
         break;
@@ -157,11 +151,24 @@ const PrinterSettingScreen = ({ navigation, route }) => {
   //   }
   // };
 
+  const { platformStatus, connectStatus } = platformDetail;
+  const { statusFontColor, Status } =
+    connectStatus == ConnectStatus.DeviceDown
+      ? { statusFontColor: AppTheme.fontGray, Status: "设备离线" }
+      : connectStatus == ConnectStatus.CloudServerDown
+        ? { statusFontColor: AppTheme.fontGray, Status: "服务器异常" }
+        : platformStatus.length == 0
+          ? { statusFontColor: AppTheme.lightGreen, Status: "正常" }
+          : platformStatus.length == 1
+            ? { statusFontColor: AppTheme.Yellow, Status: "警告" }
+            : platformStatus.length == 2
+              ? { statusFontColor: AppTheme.Red, Status: "错误" }
+              : { statusFontColor: AppTheme.fontGray, Status: "未知" };
+
   return (
-    // <MainContainer customeStyle={{ paddingTop: 0 }}>
     <MainContainer>
       <MainHeader
-        title="Printer Setting"
+        title="平台设置"
         back
         mainContainerStyle={{
           paddingVertical: 0,
@@ -172,8 +179,9 @@ const PrinterSettingScreen = ({ navigation, route }) => {
       >
         <Pressable
           style={{ marginVertical: SD.hp(15) }}
-          onPress={() =>
-            navigation.navigate(ScreenNames.PlatformInfoScreen, { id })
+          onPress={
+            () => {}
+            // navigation.navigate(ScreenNames.PlatformInfoScreen, { id })
           }
         >
           <CustomImage source={Images.platform} style={styles.deviceImage} />
@@ -202,7 +210,7 @@ const PrinterSettingScreen = ({ navigation, route }) => {
             style={[styles.sectionBtn, { backgroundColor: AppTheme.White }]}
           >
             <Text bold size={12}>
-              Status
+              状态
             </Text>
             <Text regular size={12} color={statusFontColor}>
               {/* Online */}
@@ -218,11 +226,11 @@ const PrinterSettingScreen = ({ navigation, route }) => {
                 alignItems: "center",
               },
             ]}
-            onPress={handleRefresh}
+            // onPress={handleRefresh}
           >
             <CustomImage source={Images.refresh} style={styles.refreshIcon} />
             <Text bold size={17} color={AppTheme.Primary}>
-              Refresh
+              刷新
             </Text>
           </CustomTouchable>
         </View>
@@ -237,12 +245,12 @@ const PrinterSettingScreen = ({ navigation, route }) => {
           />
         ))}
       </View>
-      <CalibrationModal
+      {/* <CalibrationModal
         isVisible={showCalibrationModal}
         onClose={closeCalibrationModal}
         onCalibrate={handleCalibrate}
         status={Status}
-      />
+      /> */}
       <Loader visible={!!loading} text={loading} />
     </MainContainer>
   );
@@ -376,4 +384,4 @@ const CalibrationModal = ({ isVisible, onClose, onCalibrate, status }) => {
   );
 };
 
-export default PrinterSettingScreen;
+export default PlatformSettingScreen;

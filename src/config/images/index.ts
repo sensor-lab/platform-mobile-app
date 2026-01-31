@@ -5,6 +5,8 @@ const Images = {
   helpAndSupport: require("./../../../assets/icons/help_and_support.png"),
   aboutSensorsparks: require("./../../../assets/icons/about_sensorsparks.png"),
   code: require("./../../../assets/icons/code.png"),
+  appApp: require("./../../../assets/icons/addApp.png"),
+  testApp: require("./../../../assets/icons/testApp.png"),
 
   BackBtn: require("../../../assets/icons/backArrow.png"),
   NoResults: require("../../../assets/icons/NoResults.png"),
@@ -32,7 +34,6 @@ const Images = {
   networkInformation: require("./../../../assets/icons/networkInformation.png"),
   printerSettingIcon: require("./../../../assets/icons/printerSettingIcon.png"),
   mediaSetting: require("./../../../assets/icons/mediaSetting.png"),
-  advanceSetting: require("./../../../assets/icons/advanceSetting.png"),
   openHttpsServer: require("./../../../assets/icons/openHttpServer.png"),
   startCalibration: require("./../../../assets/icons/startCalibration.png"),
   printDiagnosticLabel: require("./../../../assets/icons/printDiagnosticLabel.png"),

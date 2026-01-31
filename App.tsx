@@ -12,6 +12,7 @@ import {
   MainScreen,
   PlatformSettingScreen,
   PlatformSetupScreen,
+  TestAppScreen,
 } from "./src/screens";
 
 const Stack = createNativeStackNavigator();
@@ -37,6 +38,10 @@ export default function App() {
                 <Stack.Screen
                   name={ScreenNames.PlatformSettingScreen}
                   component={PlatformSettingScreen}
+                />
+                <Stack.Screen
+                  name={ScreenNames.TestAppScreen}
+                  component={TestAppScreen}
                 />
               </Stack.Navigator>
             </NavigationContainer>
