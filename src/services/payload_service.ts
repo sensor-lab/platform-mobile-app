@@ -6,12 +6,12 @@ import "react-native-get-random-values";
 import WebSocketWithSelfSignedCert from "react-native-websocket-self-signed";
 import { v4 as uuidv4 } from "uuid";
 import {
-  FlatbuffersCommand,
-  FlatbuffersEnvelope,
-  FlatbuffersMessageOptions,
-  FlatbuffersSubscribe,
-  FlatbuffersUnsubscribe,
-  Message,
+    FlatbuffersCommand,
+    FlatbuffersEnvelope,
+    FlatbuffersMessageOptions,
+    FlatbuffersSubscribe,
+    FlatbuffersUnsubscribe,
+    Message,
 } from "./flatbuffersmsg";
 
 enum CommandType {
@@ -272,24 +272,22 @@ class WebsocketService {
   public async connect(): Promise<string> {
     return this.ws.connect({
       "X-Ssl-Client-Cert":
-        "MIIDMzCCAhsCFDXGga4JSMEujL5rMZabeeHFpTmPMA0GCSqGSIb3DQEBCwUAMFQx" +
-        "CzAJBgNVBAYTAlVTMQ4wDAYDVQQIDAVTdGF0ZTENMAsGA1UEBwwEQ2l0eTEVMBMG" +
-        "A1UECgwMT3JnYW5pemF0aW9uMQ8wDQYDVQQDDAZUZXN0Q0EwHhcNMjYwMTA3MDQw" +
-        "NjI5WhcNMzYwMTA1MDQwNjI5WjBYMQswCQYDVQQGEwJVUzEOMAwGA1UECAwFU3Rh" +
-        "dGUxDTALBgNVBAcMBENpdHkxFTATBgNVBAoMDE9yZ2FuaXphdGlvbjETMBEGA1UE" +
-        "AwwKVGVzdENsaWVudDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJkf" +
-        "wytr6bkpC+W+SGzdIIUbHN4CpexMYzP5emyzGDv9p9dsM6gqxjMs3zrmswUjWiI1" +
-        "5otL8TEIQQH0ABbxBfCtzv4Gs6DQnBc8JPd3rbSNFNQ5WcofW5M868L2VBQP/raR" +
-        "DM/EW6rOQBMwnvV+gNIq9Uaryyz4w7gmcVeOs2+bPN+8GPYVsEQKhFcRoE5Fv7pc" +
-        "Yxj7JG+LE/mAlvGwlnGIy60azp8n09gm21awhjjtphMW6o2jN14lw93YnuT/yXcO" +
-        "2U4qc3VKnK9QGF/Xus2lb7DLBTtJAuwVRXMiItoGi31skMIH6FnHrnsB0bvJLGr1" +
-        "wKTSdccYNi10kruJVbUCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAemVdnFrllvtr" +
-        "kkQReKPg58IFGxcix2HdSJQi+3rhD8p2ijikdLON6iKhW8GtuN575xkPNG0EhMNy" +
-        "v1KWwNrvzND5inGNDuUUxBZ9CG7baPEmfHgFwBuH+VmoxMXv44bil1epaiYX3GIP" +
-        "0wOzjyTBXo7XKqneVQgxjAr8BwLcNxSHVFAKupkK1i4PoMjba61RGxPoaisjoBEi" +
-        "CVCLKQ04+iDTkB7m9dV+Boy3uQG0+C4Hj1qJHf6c0zSBsgmTN1zgQhIyhsplbeU2" +
-        "xhsCnBrVLsU1oL+rbXbpg1Dg8OMGrlh4X8loDeJ0mZiX7M0k9egUTRFvjEyC7EDy" +
-        "6dTMiDfpjA==",
+        "MIIC3TCCAcUCFDXGga4JSMEujL5rMZabeeHFpTmWMA0GCSqGSIb3DQEBCwUAMC4x" +
+        "FTATBgNVBAoMDFNlbnNvcnNwYXJrczEVMBMGA1UEAwwMU2Vuc29yU3BhcmtzMB4X" +
+        "DTI2MDIwODA3MTIxNFoXDTM2MDIwNjA3MTIxNFowKDEVMBMGA1UECgwMU2Vuc29y" +
+        "c3BhcmtzMQ8wDQYDVQQDDAZtb2JpbGUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw" +
+        "ggEKAoIBAQCuX2U/V4IL8bSman8eNZx9wQukOaxfaHGvCm8o7AiP3jXcOvs8G490" +
+        "ijl9+zN8KfGHtGOrW/3ejc02OEpuk1glPDfbJSmfFNg9e/SuukeuRWhG4e0uPhCV" +
+        "mnk869Ep0Y2sdmHrO7n2RVxLFMj1v2Du7QY/EgLc5p7i1q/tcDSmApdP+u32vrrw" +
+        "Et8vvdHGDXEAVubkxnTu0gZuLYRQhcl/f4WgBFnJfn5hhr/Kr61NlNosHZ8c9Hnh" +
+        "diEQrDf3MeGFldPMykwHzyhpVBTJj8fxyLYKqqY+physmGtOfl3PiYgsYCSkx4gI" +
+        "WClCv6o5tqU742cTn/NlAKLUL7X/d6Z9AgMBAAEwDQYJKoZIhvcNAQELBQADggEB" +
+        "AB00M6MXh/j1UJZxmgcK6cICoQ8VT/EwbajmtjMJhkAp3OSKc/vd8STkiGVus7BZ" +
+        "0Ee07poMUMyt/9AG2ex6TmSBpdQDrvPgvL0jOjXrMa4W5xSYbliBbrGKOfZAdCNv" +
+        "VJt0pRWsoduDm2DENBggGNXqgL4jzuw1D/ybc99kLiHG01LmTcq0mTo/LYL+8RbF" +
+        "WDyjNjU/VkyNSSCzf/XX9kIWzC4geu/sbMJZNAE493W9nwZffCnGOBknSgCWfIBj" +
+        "nfm0lwAT5ckAS0FD1v42gY7NRRZFT6X8BBHgVCtp4aunSZxgbJHyOOFDgn/KLL80" +
+        "3/sBeQyj41fpeTLptjOD73g=",
     });
   }
 
@@ -584,3 +582,4 @@ class WebsocketService {
 }
 
 export { TopicType, WebsocketService };
+
