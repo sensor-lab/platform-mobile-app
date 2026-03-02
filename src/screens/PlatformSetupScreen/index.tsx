@@ -6,12 +6,12 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  CustomTextInput,
-  InfoFieldComp,
-  Loader,
-  MainContainer,
-  MainHeader,
-  PrimaryButton,
+    CustomTextInput,
+    InfoFieldComp,
+    Loader,
+    MainContainer,
+    MainHeader,
+    PrimaryButton,
 } from "../../components";
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
@@ -23,21 +23,18 @@ const PlatformSetupScreen = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const { platformDetailsByID } = useSelector((state: any) => state.platform);
 
-  const url = "wss://iot.sensorsparks.com:8080/testapi";
-
   useEffect(() => {
     // mixpanel.track("Printer Nested Setting Page");
   }, []);
 
   const handleTestConnection = async () => {
     console.log(`Test connection for ${platformID}`);
-    const dev = "9888e0926afc";
     const payload = '{"event":"now","actions":[["gpio", "led", "output", 2]]}';
-    const ws = new WebsocketService(url);
+    const ws = new WebsocketService();
     setLoading("连接测试中");
     try {
       await ws.connect();
-      await ws.executeCommand(dev, payload);
+      await ws.executeCommand(platformID, payload);
       toast.success("成功翻转绿色创意盒LED灯");
     } catch (err) {
       toast.fail("失败", "测试连接失败");
@@ -47,24 +44,23 @@ const PlatformSetupScreen = ({ navigation, route }) => {
   };
 
   const handleAddDevice = async () => {
-    const dev = "9888e0926afc";
-    const ws = new WebsocketService(url);
+    const ws = new WebsocketService();
     setLoading("连接并添加平台中");
     try {
       await ws.connect();
-      const status = await ws.queryStatus(dev);
-      const config = await ws.queryConfig(dev);
+      const status = await ws.queryStatus(platformID);
+      const config = await ws.queryConfig(platformID);
       const statusConfig = {
         ...status,
         ...config,
       };
-      toast.success(`成功添加平台${dev}`);
+      toast.success(`成功添加平台${platformID}`);
 
       dispatch(
         setPlatformDetailsById({
-          id: dev,
+          id: platformID,
           details: {
-            id: dev,
+            id: platformID,
             mdnsName: statusConfig.mdns,
             fwVersion: statusConfig.fwver,
             hardwareVersion: statusConfig.hwver,

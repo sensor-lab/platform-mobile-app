@@ -3,20 +3,20 @@ import { SD, toggleOnboardLED } from "@/src/utils";
 import { toast } from "@/src/utils/toast.utils";
 import { useState } from "react";
 import {
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  View,
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    View,
 } from "react-native";
 import {
-  CustomDropdown,
-  CustomTextInput,
-  InfoFieldComp,
-  Loader,
-  MainContainer,
-  MainHeader,
-  PrimaryButton,
+    CustomDropdown,
+    CustomTextInput,
+    InfoFieldComp,
+    Loader,
+    MainContainer,
+    MainHeader,
+    PrimaryButton,
 } from "../../components";
 import { useTheme } from "../../hooks";
 import { styles } from "./styles";
@@ -54,14 +54,12 @@ const TestAppScreen = ({ route }) => {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleExecution = async () => {
-    const dev = "9888e0926afc";
     const payload = '{"event":"now","actions":[["gpio", "led", "output", 2]]}';
-    const url = "wss://iot.sensorsparks.com:8080/testapi";
-    const ws = new WebsocketService(url);
+    const ws = new WebsocketService();
     setLoading("硬件操作发送中");
     try {
       await ws.connect();
-      const resp = await ws.executeCommand(dev, payload);
+      const resp = await ws.executeCommand(id, payload);
       setResponse(resp);
       toast.success("发送成功");
     } catch (err) {

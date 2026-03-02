@@ -53,12 +53,11 @@ class WebsocketService {
   private responseSubscribed = [];
   private token = "";
   private signature = "";
-  private url: string;
+  private url: string = "wss://iot.sensorsparks.com:8080/testapi";
   private ws: WebSocketWithSelfSignedCert;
   private pending = new Map<string, PendingRequest>();
 
-  constructor(url: string) {
-    this.url = url;
+  constructor() {
     this.txid = uuidv4();
     this.ws = WebSocketWithSelfSignedCert.getInstance(this.url);
     this.ws.onBinaryMessage(this.handleBinaryMessage);
@@ -321,7 +320,7 @@ class WebsocketService {
       try {
         this.pending.set("xyz", { resolve, reject, timeout });
         const cmdStr = uint8ToBase64(subscribe);
-        this.ws.send(cmdStr);
+        this.ws.sendBinaryBase64(cmdStr);
       } catch (e) {
         console.log(`send subscribe exception in promise:`, e);
       }
@@ -354,7 +353,7 @@ class WebsocketService {
       try {
         this.pending.set("xyz", { resolve, reject, timeout });
         const cmdStr = uint8ToBase64(unsubscribe);
-        this.ws.send(cmdStr);
+        this.ws.sendBinaryBase64(cmdStr);
       } catch (e) {
         console.log(`send unsubscribe exception in promise:`, e);
       }
@@ -394,7 +393,7 @@ class WebsocketService {
       try {
         this.pending.set("xyz", { resolve, reject, timeout });
         const cmdStr = uint8ToBase64(command);
-        this.ws.send(cmdStr);
+        this.ws.sendBinaryBase64(cmdStr);
       } catch (e) {
         console.log(`send command exception in promise:`, e);
       }

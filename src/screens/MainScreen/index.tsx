@@ -1,3 +1,4 @@
+import { ConnectStatus, PlatformDetails } from "@/src/redux/reducers";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, View } from "react-native";
 import { useSelector } from "react-redux";
@@ -5,12 +6,12 @@ import { Images, ScreenNames } from "../../config";
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
 import {
-  CustomImage,
-  MainContainer,
-  MainHeader,
-  PrimaryButton,
-  SectionContainer,
-  Text,
+    CustomImage,
+    MainContainer,
+    MainHeader,
+    PrimaryButton,
+    SectionContainer,
+    Text,
 } from "./../../components";
 import { MainScreenOptionsCard, PairedDevicesComp } from "./components";
 import { opetionsData } from "./extra/data";
@@ -19,17 +20,25 @@ import { styles } from "./styles";
 function MainScreen({ navigation }) {
   const { AppTheme } = useTheme();
   const { platformDetailsByID } = useSelector((state: any) => state.platform);
-  const [setup, setSetup] = useState([]);
+  const [setup, setSetup] = useState<PlatformDetails[]>([]);
   const [showRemoveButton, setShowRemoveButton] = useState(null);
   useEffect(() => {
-    const sortedPlatforms: any = [...Object.values(platformDetailsByID)].sort(
-      (a: any, b: any) => {
-        if (a.Status === "Connected" && b.Status !== "Connected") return -1;
-        if (a.Status !== "Connected" && b.Status === "Connected") return 1;
+    const sortedPlatforms: PlatformDetails[] = [
+      ...(Object.values(platformDetailsByID) as PlatformDetails[]),
+    ].sort((a: PlatformDetails, b: PlatformDetails) => {
+      if (
+        a.connectStatus === ConnectStatus.Online &&
+        b.connectStatus !== ConnectStatus.Online
+      )
+        return -1;
+      if (
+        a.connectStatus !== ConnectStatus.Online &&
+        b.connectStatus === ConnectStatus.Online
+      )
+        return 1;
 
-        return a.HostName.localeCompare(b.HostName);
-      },
-    );
+      return a.mdnsName.localeCompare(b.mdnsName);
+    });
     setSetup(sortedPlatforms);
   }, [platformDetailsByID]);
 

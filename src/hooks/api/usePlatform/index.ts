@@ -1,7 +1,7 @@
 import {
-  ConnectStatus,
-  updateConnectStatus,
-  updatePlatformStatus,
+    ConnectStatus,
+    updateConnectStatus,
+    updatePlatformStatus,
 } from "@/src/redux/reducers";
 import { WebsocketService } from "@/src/services/payload_service";
 import { useQuery } from "@tanstack/react-query";
@@ -27,8 +27,7 @@ export const usePlatform = (
     queryFn: async () => {
       if (!id) throw new Error("Invalid ID to query cloud");
 
-      const url = "wss://iot.sensorsparks.com:8080/testapi";
-      const ws = new WebsocketService(url);
+      const ws = new WebsocketService();
       try {
         await ws.connect();
         const status = await ws.queryStatus(id);
