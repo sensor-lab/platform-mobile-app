@@ -4,4 +4,5 @@ export const ScreenNames = {
   PlatformSettingScreen: "PlatformSetting",
   TestAppScreen: "TestApp",
   HttpServerWebView: "HttpServer",
+  LedStripController: "LedStripController",
 };

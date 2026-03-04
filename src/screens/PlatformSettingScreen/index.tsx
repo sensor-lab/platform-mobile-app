@@ -1,14 +1,14 @@
 import {
-  CustomDropdown,
-  CustomImage,
-  CustomModal,
-  CustomTouchable,
-  Loader,
-  MainContainer,
-  MainHeader,
-  PrimaryButton,
-  SectionContainer,
-  Text,
+    CustomDropdown,
+    CustomImage,
+    CustomModal,
+    CustomTouchable,
+    Loader,
+    MainContainer,
+    MainHeader,
+    PrimaryButton,
+    SectionContainer,
+    Text,
 } from "@/src/components";
 import { Images, ScreenNames } from "@/src/config";
 import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
@@ -22,9 +22,28 @@ import { PrinterSettingScreenCard } from "./components";
 import { cardsDummyData } from "./extra";
 import { styles } from "./styles";
 
+    
+const appCategory = [
+  { label: "发光类", value: "lightCategory" },
+  { label: "传感器类", value: "sensorCategory" },
+];
+
+const apps: Record<string, { label: string; value: string }[]> = {
+    "lightCategory": [{
+        label: "灯带控制器", value: "ledStripController"
+    }],
+    "sensorCategory": [{
+        label: "环境监测应用", value: "environmentMonitor"
+    }, {
+        label: "温湿度传感器", value: "temperatureHumiditySensor"
+    }]
+}
+
 const PlatformSettingScreen = ({ navigation, route }) => {
   const id = route?.params?.id;
   const [loading, setLoading] = useState("");
+  const [showAddAppsModal, setShowAddAppsModal] = useState(false);
+  const [addedApps, setAddedApps] = useState<string[]>([]);
   const platformDetail = useSelector(
     (state: RootState) => state.platform.platformDetailsByID[id],
   );
@@ -60,6 +79,28 @@ const PlatformSettingScreen = ({ navigation, route }) => {
   // } = printerDetails;
 
   const { AppTheme } = useTheme();
+
+  // Helper function to get app details
+  const getAppDetails = (appValue: string) => {
+    for (const category in apps) {
+      const appInCategory = apps[category].find(app => app.value === appValue);
+      if (appInCategory) return appInCategory;
+    }
+    return null;
+  };
+
+  // Helper function to handle app navigation
+  const handleAppClick = (appValue: string) => {
+    switch (appValue) {
+      case "ledStripController":
+        navigation.navigate(ScreenNames.LedStripController, { id });
+        break;
+      default:
+        console.log(`App not implemented: ${appValue}`);
+        break;
+    }
+  };
+
   const handleClick = (el) => {
     switch (el.title) {
       case "测试应用":
@@ -68,9 +109,10 @@ const PlatformSettingScreen = ({ navigation, route }) => {
         });
         break;
       case "HTTP服务器":
-        // handlePrinterSetting("calibrate");
-        // setShowCalibrationModal(true);
-        Linking.openURL("http://192.168.1.24");
+        Linking.openURL("http://192.168.1.187");
+        break;
+      case "添加应用":
+        setShowAddAppsModal(true);
         break;
       default:
         break;
@@ -123,15 +165,23 @@ const PlatformSettingScreen = ({ navigation, route }) => {
   //     ) {
   //       clearInterval(intervalId);
   //       toast.success(`Calibration result: ${latestStatus}`);
-  //       setShowCalibrationModal(false);
+  //       setShowAddAppsModal(false);
   //       setLoading(null);
   //     }
   //   }, 2000);
   // };
 
-  // const closeCalibrationModal = () => {
-  //   setShowCalibrationModal(!showCalibrationModal);
-  // };
+  const closeCalibrationModal = () => {
+    setShowAddAppsModal(!showAddAppsModal);
+  };
+
+  const handleAddApp = (appValue: string) => {
+    if (appValue && !addedApps.includes(appValue)) {
+      setAddedApps([...addedApps, appValue]);
+      setShowAddAppsModal(false);
+      console.log(`Added app: ${appValue}`);
+    }
+  };
 
   // const statusFontColor =
   //   statusCategory == "OK"
@@ -244,21 +294,51 @@ const PlatformSettingScreen = ({ navigation, route }) => {
             onPress={() => handleClick(item)}
           />
         ))}
+        
+        {/* Render added apps */}
+        {addedApps.map((appValue, index) => {
+          const appDetails = getAppDetails(appValue);
+          if (!appDetails) return null;
+          
+          return (
+            <PrinterSettingScreenCard
+              key={`app-${index}`}
+              icon={Images.platform}  // TODO: Add proper icons for apps
+              title={appDetails.label}
+              onPress={() => handleAppClick(appValue)}
+            />
+          );
+        })}
       </View>
-      {/* <CalibrationModal
-        isVisible={showCalibrationModal}
+      <AddAppsModal
+        isVisible={showAddAppsModal}
         onClose={closeCalibrationModal}
-        onCalibrate={handleCalibrate}
+        onAddNewApp={handleAddApp}
         status={Status}
-      /> */}
+      />
       <Loader visible={!!loading} text={loading} />
     </MainContainer>
   );
 };
 
-const CalibrationModal = ({ isVisible, onClose, onCalibrate, status }) => {
+const AddAppsModal = ({ isVisible, onClose, onAddNewApp, status }) => {
   const { AppTheme } = useTheme();
-  const [selectedValue, setSelectedValue] = useState<string>("gap");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedApp, setSelectedApp] = useState<string | null>(null);
+
+  // Reset selections when modal opens/closes
+  useEffect(() => {
+    if (isVisible) {
+      setSelectedCategory(null);
+      setSelectedApp(null);
+    }
+  }, [isVisible]);
+
+  const handleAddApp = () => {
+    if (selectedApp) {
+      onAddNewApp(selectedApp);
+    }
+  };
 
   return (
     <CustomModal isVisible={isVisible} onClose={onClose}>
@@ -267,7 +347,7 @@ const CalibrationModal = ({ isVisible, onClose, onCalibrate, status }) => {
       >
         <View style={styles.clibModalContentContainer}>
           <Text bold size={24} primartColor centered>
-            Start Calibration
+            添加应用
           </Text>
           <Text
             regular
@@ -276,65 +356,17 @@ const CalibrationModal = ({ isVisible, onClose, onCalibrate, status }) => {
             bottomSpacing={20}
             topSpacing={10}
           >
-            Select Your Media Type
+            选择应用的类别和名称
           </Text>
 
-          {status === "Calibrate Succeeded" ? (
-            <Text
-              regular
-              size={12}
-              color={AppTheme.lightGreen}
-              bottomSpacing={5}
-              centered
-            >
-              ✅ Calibration completed successfully
-            </Text>
-          ) : status == "Calibrate Failed" ? (
-            <Text
-              regular
-              size={12}
-              color={AppTheme.ErrorTextColor}
-              bottomSpacing={5}
-              centered
-            >
-              ❌ Calibration failed. Please check the printer and try again
-            </Text>
-          ) : status == "Ready" ? (
-            <Text
-              regular
-              size={12}
-              color={AppTheme.SuccessTextColor}
-              bottomSpacing={5}
-            >
-              Printer is ready to calibrate
-            </Text>
-          ) : status == "Calibrating" ? (
-            <Text
-              regular
-              size={12}
-              color={AppTheme.DispatcedTextColor}
-              bottomSpacing={5}
-            >
-              Calibrating in progress
-            </Text>
-          ) : (
-            <Text
-              regular
-              size={12}
-              color={AppTheme.ErrorTextColor}
-              bottomSpacing={5}
-            >
-              ⚠️ Printer is not ready. Please clear any errors before starting
-              calibration
-            </Text>
-          )}
-
           <CustomDropdown
-            disable={status != "Ready"}
-            data={calibrationMethods}
-            value={selectedValue}
-            onChange={setSelectedValue}
-            placeholder="Pick a color"
+            data={appCategory}
+            value={selectedCategory}
+            onChange={(value) => {
+              setSelectedCategory(value);
+              setSelectedApp(null); // Reset app selection when category changes
+            }}
+            placeholder="选择应用类别"
             dropdownStyle={{
               ...styles.customDropdownStyle,
               backgroundColor: AppTheme.skyBlue,
@@ -355,6 +387,35 @@ const CalibrationModal = ({ isVisible, onClose, onCalibrate, status }) => {
             activeColor={AppTheme.White}
             // fontFamily={Fonts["Bold"]}
           />
+
+          {selectedCategory && (
+            <CustomDropdown
+              data={apps[selectedCategory]}
+              value={selectedApp}
+              onChange={setSelectedApp}
+              placeholder="选择应用名称"
+              dropdownStyle={{
+                ...styles.customDropdownStyle,
+                backgroundColor: AppTheme.skyBlue,
+                marginTop: SD.hp(15),
+              }}
+              iconColor={AppTheme.Primary}
+              placeholderStyle={{
+                ...styles.dropdownPlaceHoldertextStyles,
+                color: AppTheme.fontGray,
+              }}
+              itemStyle={{
+                ...styles.customItemStyle,
+              }}
+              containerStyle={{
+                ...styles.itemContainerStyle,
+                backgroundColor: AppTheme.skyBlue,
+              }}
+              place
+              activeColor={AppTheme.White}
+              // fontFamily={Fonts["Bold"]}
+            />
+          )}
         </View>
         <View
           style={{
@@ -365,17 +426,20 @@ const CalibrationModal = ({ isVisible, onClose, onCalibrate, status }) => {
           }}
         >
           <PrimaryButton
-            title="Calibrate"
-            customStyles={styles.modalBtn}
-            onPress={() => onCalibrate(selectedValue)}
-            disabled={status != "Ready"}
+            title="添加"
+            customStyles={[
+              styles.modalBtn,
+              { opacity: selectedApp ? 1 : 0.5 }
+            ]}
+            onPress={handleAddApp}
+            disabled={!selectedApp}
           />
           <CustomTouchable
             onPress={onClose}
             style={{ marginVertical: SD.hp(12) }}
           >
             <Text bold size={12} color={AppTheme.fontGray}>
-              Skip
+              返回
             </Text>
           </CustomTouchable>
         </View>

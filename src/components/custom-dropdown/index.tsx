@@ -1,10 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet, TextStyle, ViewStyle } from "react-native";
+import { ViewStyle } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
-import { styles } from "./styles";
 import { useTheme } from "../../hooks";
 import { Fonts } from "../../styles";
 import { SD } from "../../utils";
+import { styles } from "./styles";
 
 interface DropdownProps {
   data: { label: string; value: string | number }[];
@@ -33,6 +33,7 @@ const CustomDropdown: React.FC<DropdownProps> = ({
   const { AppTheme } = useTheme();
   return (
     <Dropdown
+      mode="modal"
       data={data}
       value={value}
       onChange={(item) => onChange(item.value)}

@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
-import { SD } from "../../utils";
 import { Fonts } from "../../styles";
+import { SD } from "../../utils";
 
 export const styles = StyleSheet.create({
   deviceImage: {
@@ -36,7 +36,7 @@ export const styles = StyleSheet.create({
   },
   clibModalContainer: {
     width: "90%",
-    height: SD.hp(311),
+    height: SD.hp(350),
     borderRadius: 20,
     paddingVertical: SD.hp(10),
     paddingHorizontal: SD.wp(10),

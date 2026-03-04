@@ -9,10 +9,11 @@ import { PersistGate } from "redux-persist/integration/react";
 import { ScreenNames } from "./src/config";
 import { persistor, store } from "./src/redux";
 import {
-  MainScreen,
-  PlatformSettingScreen,
-  PlatformSetupScreen,
-  TestAppScreen,
+    LedStripController,
+    MainScreen,
+    PlatformSettingScreen,
+    PlatformSetupScreen,
+    TestAppScreen,
 } from "./src/screens";
 
 const Stack = createNativeStackNavigator();
@@ -24,6 +25,7 @@ export default function App() {
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
+            <>
             <StatusBar style="dark" />
             <NavigationContainer>
               <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -43,9 +45,14 @@ export default function App() {
                   name={ScreenNames.TestAppScreen}
                   component={TestAppScreen}
                 />
+                <Stack.Screen
+                  name={ScreenNames.LedStripController}
+                  component={LedStripController}
+                />
               </Stack.Navigator>
             </NavigationContainer>
             <Toast />
+            </>
           </QueryClientProvider>
         </PersistGate>
       </Provider>
