@@ -9,6 +9,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import { ScreenNames } from "./src/config";
 import { persistor, store } from "./src/redux";
 import {
+    EnvironmentMonitorScreen,
     LedStripController,
     MainScreen,
     PlatformSettingScreen,
@@ -48,6 +49,10 @@ export default function App() {
                 <Stack.Screen
                   name={ScreenNames.LedStripController}
                   component={LedStripController}
+                />
+                <Stack.Screen
+                  name={ScreenNames.EnvironmentMonitorScreen}
+                  component={EnvironmentMonitorScreen}
                 />
               </Stack.Navigator>
             </NavigationContainer>

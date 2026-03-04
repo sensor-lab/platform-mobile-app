@@ -5,4 +5,5 @@ export const ScreenNames = {
   TestAppScreen: "TestApp",
   HttpServerWebView: "HttpServer",
   LedStripController: "LedStripController",
+  EnvironmentMonitorScreen: "EnvironmentMonitor",
 };

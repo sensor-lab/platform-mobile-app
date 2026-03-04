@@ -31,7 +31,7 @@ export const styles = StyleSheet.create({
   cardsSection: {
     marginTop: SD.hp(10),
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     flexWrap: "wrap",
   },
   clibModalContainer: {

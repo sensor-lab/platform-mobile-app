@@ -7,6 +7,8 @@ const Images = {
   code: require("./../../../assets/icons/code.png"),
   appApp: require("./../../../assets/icons/addApp.png"),
   testApp: require("./../../../assets/icons/testApp.png"),
+  ledStripApp: require("./../../../assets/icons/ledStripIcon.png"),
+  environmentApp: require("./../../../assets/icons/environmentAppIcon.png"),
 
   BackBtn: require("../../../assets/icons/backArrow.png"),
   NoResults: require("../../../assets/icons/NoResults.png"),

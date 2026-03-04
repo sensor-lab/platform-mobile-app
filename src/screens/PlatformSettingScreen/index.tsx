@@ -28,14 +28,12 @@ const appCategory = [
   { label: "传感器类", value: "sensorCategory" },
 ];
 
-const apps: Record<string, { label: string; value: string }[]> = {
+const apps: Record<string, { label: string; value: string; icon: number }[]> = {
     "lightCategory": [{
-        label: "灯带控制器", value: "ledStripController"
+        label: "灯带控制器", value: "ledStripController", icon: Images.ledStripApp
     }],
     "sensorCategory": [{
-        label: "环境监测应用", value: "environmentMonitor"
-    }, {
-        label: "温湿度传感器", value: "temperatureHumiditySensor"
+        label: "环境监测应用", value: "environmentMonitor", icon: Images.environmentApp
     }]
 }
 
@@ -94,6 +92,9 @@ const PlatformSettingScreen = ({ navigation, route }) => {
     switch (appValue) {
       case "ledStripController":
         navigation.navigate(ScreenNames.LedStripController, { id });
+        break;
+      case "environmentMonitor":
+        navigation.navigate(ScreenNames.EnvironmentMonitorScreen, { id });
         break;
       default:
         console.log(`App not implemented: ${appValue}`);
@@ -303,7 +304,7 @@ const PlatformSettingScreen = ({ navigation, route }) => {
           return (
             <PrinterSettingScreenCard
               key={`app-${index}`}
-              icon={Images.platform}  // TODO: Add proper icons for apps
+              icon={appDetails.icon}
               title={appDetails.label}
               onPress={() => handleAppClick(appValue)}
             />
