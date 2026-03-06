@@ -2,9 +2,9 @@ import { CustomImage, Text } from "@/src/components";
 import { Images, ScreenNames } from "@/src/config";
 import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
 import {
-  ConnectStatus,
-  PlatformDetails,
-  removePlatformByID,
+    ConnectStatus,
+    PlatformDetails,
+    removePlatformByID,
 } from "@/src/redux/reducers";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";

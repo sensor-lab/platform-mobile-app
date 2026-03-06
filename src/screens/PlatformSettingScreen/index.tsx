@@ -184,6 +184,11 @@ const PlatformSettingScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleRemoveApp = (appValue: string) => {
+    setAddedApps(addedApps.filter(app => app !== appValue));
+    console.log(`Removed app: ${appValue}`);
+  };
+
   // const statusFontColor =
   //   statusCategory == "OK"
   //     ? AppTheme.lightGreen
@@ -307,6 +312,8 @@ const PlatformSettingScreen = ({ navigation, route }) => {
               icon={appDetails.icon}
               title={appDetails.label}
               onPress={() => handleAppClick(appValue)}
+              onRemove={() => handleRemoveApp(appValue)}
+              isRemovable={true}
             />
           );
         })}
