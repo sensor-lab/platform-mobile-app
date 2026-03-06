@@ -6,4 +6,6 @@ export const ScreenNames = {
   HttpServerWebView: "HttpServer",
   LedStripController: "LedStripController",
   EnvironmentMonitorScreen: "EnvironmentMonitor",
+  RemoteCameraScreen: "RemoteCamera",
+  PowerControllerScreen: "PowerController",
 };

@@ -14,6 +14,8 @@ import {
     MainScreen,
     PlatformSettingScreen,
     PlatformSetupScreen,
+    PowerControllerScreen,
+    RemoteCameraScreen,
     TestAppScreen,
 } from "./src/screens";
 
@@ -53,6 +55,14 @@ export default function App() {
                 <Stack.Screen
                   name={ScreenNames.EnvironmentMonitorScreen}
                   component={EnvironmentMonitorScreen}
+                />
+                <Stack.Screen
+                  name={ScreenNames.PowerControllerScreen}
+                  component={PowerControllerScreen}
+                />
+                <Stack.Screen
+                  name={ScreenNames.RemoteCameraScreen}
+                  component={RemoteCameraScreen}
                 />
               </Stack.Navigator>
             </NavigationContainer>

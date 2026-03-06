@@ -26,6 +26,8 @@ import { styles } from "./styles";
 const appCategory = [
   { label: "发光类", value: "lightCategory" },
   { label: "传感器类", value: "sensorCategory" },
+  { label: "图像与声音类", value: "imageSoundCategory" },
+  { label: "电源与储能", value: "powerCategory" },
 ];
 
 const apps: Record<string, { label: string; value: string; icon: number }[]> = {
@@ -34,6 +36,12 @@ const apps: Record<string, { label: string; value: string; icon: number }[]> = {
     }],
     "sensorCategory": [{
         label: "环境监测应用", value: "environmentMonitor", icon: Images.environmentApp
+    }],
+    "imageSoundCategory": [{
+        label: "远程照相机", value: "remoteCamera", icon: Images.remoteCameraApp
+    }],
+    "powerCategory": [{
+        label: "电源控制器", value: "powerController", icon: Images.powerControllerApp
     }]
 }
 
@@ -95,6 +103,12 @@ const PlatformSettingScreen = ({ navigation, route }) => {
         break;
       case "environmentMonitor":
         navigation.navigate(ScreenNames.EnvironmentMonitorScreen, { id });
+        break;
+      case "remoteCamera":
+        navigation.navigate(ScreenNames.RemoteCameraScreen, { id });
+        break;
+      case "powerController":
+        navigation.navigate(ScreenNames.PowerControllerScreen, { id });
         break;
       default:
         console.log(`App not implemented: ${appValue}`);
