@@ -1,4 +1,5 @@
 import {
+    CustomDropdown,
     MainContainer,
     MainHeader,
     PrimaryButton,
@@ -15,38 +16,27 @@ interface EnvironmentData {
   temperature: number;
   humidity: number;
   airQuality: number;
-  lightIntensity: number;
-  noiseLevel: number;
 }
+
+const availablePins = Array.from({ length: 20 }, (_, i) => ({
+  label: `GPIO ${i}`,
+  value: String(i),
+}));
 
 const EnvironmentMonitorScreen = ({ navigation, route }) => {
   const { AppTheme } = useTheme();
+  const [selectedPin, setSelectedPin] = useState<string>("");
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [environmentData, setEnvironmentData] = useState<EnvironmentData>({
     temperature: 22.5,
     humidity: 45,
     airQuality: 85,
-    lightIntensity: 320,
-    noiseLevel: 42,
   });
 
   const handleToggleMonitoring = () => {
     setIsMonitoring(!isMonitoring);
     // TODO: Send command to platform to start/stop monitoring
     console.log(`Environmental Monitoring ${isMonitoring ? 'STOPPED' : 'STARTED'}`);
-  };
-
-  const handleRefreshData = () => {
-    // TODO: Fetch real data from platform sensors
-    // Simulate data update
-    setEnvironmentData({
-      temperature: 20 + Math.random() * 10,
-      humidity: 40 + Math.random() * 20,
-      airQuality: 70 + Math.random() * 30,
-      lightIntensity: 200 + Math.random() * 400,
-      noiseLevel: 35 + Math.random() * 30,
-    });
-    console.log('Environment data refreshed');
   };
 
   // Simulate real-time updates when monitoring is active
@@ -59,8 +49,6 @@ const EnvironmentMonitorScreen = ({ navigation, route }) => {
           temperature: Math.max(15, Math.min(35, prev.temperature + (Math.random() - 0.5) * 2)),
           humidity: Math.max(20, Math.min(80, prev.humidity + (Math.random() - 0.5) * 5)),
           airQuality: Math.max(50, Math.min(100, prev.airQuality + (Math.random() - 0.5) * 5)),
-          lightIntensity: Math.max(0, Math.min(1000, prev.lightIntensity + (Math.random() - 0.5) * 50)),
-          noiseLevel: Math.max(20, Math.min(80, prev.noiseLevel + (Math.random() - 0.5) * 10)),
         }));
       }, 2000);
     }
@@ -106,6 +94,30 @@ const EnvironmentMonitorScreen = ({ navigation, route }) => {
           paddingVertical: 0,
         }}
       />
+      {/* GPIO selection card */}
+      <SectionContainer
+        containerStyles={{
+          marginTop: SD.hp(50),
+          paddingVertical: SD.hp(20),
+          paddingHorizontal: SD.wp(20),
+        }}
+      >
+        <Text bold size={14} color={AppTheme.fontGray} bottomSpacing={12}>
+          选择GPIO
+        </Text>
+        <CustomDropdown
+          data={availablePins}
+          value={selectedPin}
+          onChange={(v) => setSelectedPin(String(v))}
+          placeholder="GPIO0"
+          dropdownStyle={{ ...styles.dropdown, backgroundColor: AppTheme.White }}
+          iconColor={AppTheme.Primary}
+          placeholderStyle={{ color: AppTheme.Black, fontSize: 14 }}
+          containerStyle={{ backgroundColor: AppTheme.White, borderRadius: 10 }}
+          activeColor={AppTheme.Primary}
+        />
+      </SectionContainer>
+
       <SectionContainer
         containerStyles={{ 
           marginTop: SD.hp(20), 
@@ -115,9 +127,6 @@ const EnvironmentMonitorScreen = ({ navigation, route }) => {
       >
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.headerContainer}>
-            <Text bold size={20} centered color={AppTheme.Black} bottomSpacing={10}>
-              环境数据监测
-            </Text>
             <View style={styles.statusContainer}>
               <Text bold size={16} color={AppTheme.Black}>
                 监测状态: 
@@ -141,27 +150,15 @@ const EnvironmentMonitorScreen = ({ navigation, route }) => {
             
             <View style={styles.dataRow}>
               {renderEnvironmentCard("空气质量", environmentData.airQuality.toFixed(0), "AQI", airQualityStatus)}
-              {renderEnvironmentCard("光照强度", environmentData.lightIntensity.toFixed(0), "lux")}
-            </View>
-            
-            <View style={styles.dataRow}>
-              {renderEnvironmentCard("噪音水平", environmentData.noiseLevel.toFixed(0), "dB")}
-              <View style={styles.dataCard} /> {/* Empty card for symmetry */}
             </View>
           </View>
 
           <View style={styles.controlContainer}>
             <PrimaryButton
-              title="刷新数据"
-              customStyles={[styles.refreshBtn, { backgroundColor: AppTheme.Primary }]}
-              onPress={handleRefreshData}
-            />
-            
-            <PrimaryButton
               title={isMonitoring ? '停止监测' : '开始监测'}
               customStyles={[
                 styles.toggleBtn,
-                { backgroundColor: isMonitoring ? AppTheme.Red : AppTheme.lightGreen }
+                { backgroundColor: isMonitoring ? AppTheme.LightGray : AppTheme.Primary }
               ]}
               onPress={handleToggleMonitoring}
             />

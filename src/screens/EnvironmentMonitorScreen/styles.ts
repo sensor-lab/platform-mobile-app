@@ -2,6 +2,12 @@ import { StyleSheet } from "react-native";
 import { SD } from "../../utils";
 
 export const styles = StyleSheet.create({
+  dropdown: {
+    width: "100%",
+    paddingHorizontal: SD.wp(5),
+    paddingVertical: SD.hp(8),
+    borderRadius: 10,
+  },
   headerContainer: {
     alignItems: "center",
     marginBottom: SD.hp(25),
@@ -53,15 +59,9 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: SD.hp(20),
   },
-  refreshBtn: {
-    width: "80%",
-    paddingVertical: SD.hp(12),
-    borderRadius: 8,
-    marginBottom: SD.hp(15),
-  },
   toggleBtn: {
     width: "80%",
-    paddingVertical: SD.hp(15),
+    height: SD.hp(56),
     borderRadius: 10,
   },
 });

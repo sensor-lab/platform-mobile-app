@@ -1,263 +1,261 @@
 import {
+    CustomDropdown,
     MainContainer,
     MainHeader,
-    PrimaryButton,
     SectionContainer,
     Text,
-    CustomDropdown,
 } from "@/src/components";
 import { useTheme } from "@/src/hooks";
-import { useState } from "react";
-import { View, Alert } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+    ActivityIndicator,
+    Animated,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { SD } from "../../utils";
 import { styles } from "./styles";
 
-// Available GPIO pins for power control
-const availablePins = [
-  { label: "引脚 2 (GPIO2)", value: "2" },
-  { label: "引脚 4 (GPIO4)", value: "4" },
-  { label: "引脚 5 (GPIO5)", value: "5" },
-  { label: "引脚 12 (GPIO12)", value: "12" },
-  { label: "引脚 13 (GPIO13)", value: "13" },
-  { label: "引脚 14 (GPIO14)", value: "14" },
-  { label: "引脚 15 (GPIO15)", value: "15" },
-  { label: "引脚 16 (GPIO16)", value: "16" },
-  { label: "引脚 17 (GPIO17)", value: "17" },
-  { label: "引脚 18 (GPIO18)", value: "18" },
-  { label: "引脚 19 (GPIO19)", value: "19" },
-  { label: "引脚 21 (GPIO21)", value: "21" },
-  { label: "引脚 22 (GPIO22)", value: "22" },
-  { label: "引脚 23 (GPIO23)", value: "23" },
-];
+type PinMode = "input" | "output";
 
+// GPIO pins 0-19
+const availablePins = Array.from({ length: 20 }, (_, i) => ({
+  label: `GPIO ${i}`,
+  value: String(i),
+}));
+
+// Dummy API: read GPIO input status
+const fetchGpioStatus = async (pin: string): Promise<boolean> => {
+  // TODO: Replace with real API call
+  return new Promise((resolve) => setTimeout(() => resolve(false), 600));
+};
+
+// Dummy API: set GPIO output level
+const setGpioOutput = async (pin: string, high: boolean): Promise<boolean> => {
+  // TODO: Replace with real API call
+  return new Promise((resolve) => setTimeout(() => resolve(high), 300));
+};
+
+// ─── Large animated toggle ────────────────────────────────────────────────────
+const TRACK_HEIGHT = SD.hp(90);
+const THUMB_SIZE = SD.hp(78);
+const THUMB_MARGIN = (TRACK_HEIGHT - THUMB_SIZE) / 2;
+
+const LargeToggle = ({
+  value,
+  onToggle,
+  disabled,
+}: {
+  value: boolean;
+  onToggle: () => void;
+  disabled: boolean;
+}) => {
+  const { AppTheme } = useTheme();
+  const [trackWidth, setTrackWidth] = useState(0);
+  const animValue = useRef(new Animated.Value(value ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(animValue, {
+      toValue: value ? 1 : 0,
+      useNativeDriver: false,
+      tension: 120,
+      friction: 8,
+    }).start();
+  }, [value, animValue]);
+
+  const thumbLeft =
+    trackWidth > 0
+      ? animValue.interpolate({
+          inputRange: [0, 1],
+          outputRange: [
+            THUMB_MARGIN,
+            trackWidth - THUMB_SIZE - THUMB_MARGIN,
+          ],
+        })
+      : THUMB_MARGIN;
+
+  return (
+    <TouchableOpacity
+      onPress={disabled ? undefined : onToggle}
+      activeOpacity={disabled ? 1 : 0.85}
+    >
+      <Animated.View
+        style={[
+          styles.toggleTrack,
+          { backgroundColor: value ? "#7ED321" : AppTheme.disableGray },
+        ]}
+        onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
+      >
+        <Animated.View
+          style={[
+            styles.toggleThumb,
+            { top: THUMB_MARGIN, left: thumbLeft },
+          ]}
+        />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 const PowerControllerScreen = ({ navigation, route }) => {
   const { AppTheme } = useTheme();
-  const [selectedPin, setSelectedPin] = useState<string | null>(null);
-  const [pinStates, setPinStates] = useState<Record<string, boolean>>({});
-  const [isConnected, setIsConnected] = useState(false);
+  const [selectedPin, setSelectedPin] = useState<string>("");
+  const [pinMode, setPinMode] = useState<PinMode | null>(null);
+  const [pinHigh, setPinHigh] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleConnect = () => {
-    setIsConnected(!isConnected);
-    // TODO: Send command to platform to connect/disconnect power controller
-    console.log(`Power Controller ${isConnected ? 'Disconnected' : 'Connected'}`);
-    if (!isConnected) {
-      Alert.alert("成功", "电源控制器已连接");
-    } else {
-      Alert.alert("提示", "电源控制器已断开");
-      setPinStates({});
-    }
-  };
+  const handlePinChange = useCallback((pin: string | number) => {
+    setSelectedPin(String(pin));
+    setPinMode(null);
+    setPinHigh(false);
+  }, []);
 
-  const handleSetPinState = (state: boolean) => {
-    if (!selectedPin) {
-      Alert.alert("错误", "请先选择引脚");
-      return;
-    }
-    if (!isConnected) {
-      Alert.alert("错误", "请先连接电源控制器");
-      return;
-    }
-
-    setPinStates(prev => ({
-      ...prev,
-      [selectedPin]: state
-    }));
-
-    // TODO: Send command to platform to set pin state
-    console.log(`Setting Pin ${selectedPin} to ${state ? 'HIGH' : 'LOW'}`);
-    Alert.alert("成功", `引脚 ${selectedPin} 已设置为 ${state ? '高电平 (3.3V)' : '低电平 (0V)'}`);
-  };
-
-  const getCurrentPinState = () => {
-    if (!selectedPin) return null;
-    return pinStates[selectedPin];
-  };
-
-  const handleResetAllPins = () => {
-    if (!isConnected) {
-      Alert.alert("错误", "请先连接电源控制器");
-      return;
-    }
-
-    Alert.alert(
-      "确认重置",
-      "确定要将所有引脚重置为低电平吗？",
-      [
-        { text: "取消", style: "cancel" },
-        {
-          text: "确定",
-          onPress: () => {
-            setPinStates({});
-            // TODO: Send command to platform to reset all pins
-            console.log("Resetting all pins to LOW");
-            Alert.alert("成功", "所有引脚已重置为低电平");
-          }
+  const handleModeSelect = useCallback(
+    async (mode: PinMode) => {
+      setPinMode(mode);
+      setPinHigh(false);
+      if (mode === "input") {
+        setLoading(true);
+        try {
+          const status = await fetchGpioStatus(selectedPin);
+          setPinHigh(status);
+        } catch {
+          setPinHigh(false);
+        } finally {
+          setLoading(false);
         }
-      ]
-    );
-  };
+      }
+    },
+    [selectedPin],
+  );
+
+  const handleToggle = useCallback(async () => {
+    if (pinMode !== "output" || !selectedPin) return;
+    setLoading(true);
+    try {
+      const result = await setGpioOutput(selectedPin, !pinHigh);
+      setPinHigh(result);
+    } catch {
+      // keep previous state on failure
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedPin, pinHigh, pinMode]);
 
   return (
     <MainContainer>
       <MainHeader
         title="电源控制器"
         back
-        mainContainerStyle={{
-          paddingVertical: 0,
-        }}
+        mainContainerStyle={{ paddingVertical: 0 }}
       />
+
+      {/* ── GPIO selection card ── */}
       <SectionContainer
-        containerStyles={{ 
-          marginTop: SD.hp(50), 
-          paddingBottom: SD.hp(20),
-          paddingHorizontal: SD.wp(20)
+        containerStyles={{
+          marginTop: SD.hp(50),
+          paddingVertical: SD.hp(20),
+          paddingHorizontal: SD.wp(20),
         }}
       >
-        <View style={styles.controlContainer}>
-          <Text bold size={20} centered color={AppTheme.Black} bottomSpacing={30}>
-            GPIO引脚电源控制
-          </Text>
-          
-          <View style={styles.statusContainer}>
-            <Text bold size={16} color={AppTheme.Black} bottomSpacing={10}>
-              控制器状态: 
-            </Text>
-            <View style={[
-              styles.statusIndicator, 
-              { backgroundColor: isConnected ? AppTheme.lightGreen : AppTheme.fontGray }
-            ]}>
-              <Text bold size={14} color={AppTheme.White}>
-                {isConnected ? '已连接' : '未连接'}
-              </Text>
-            </View>
-          </View>
-
-          <PrimaryButton
-            title={isConnected ? '断开控制器' : '连接控制器'}
-            customStyles={[
-              styles.connectBtn,
-              { backgroundColor: isConnected ? AppTheme.Red : AppTheme.Primary }
-            ]}
-            onPress={handleConnect}
-          />
-
-          <View style={styles.pinSelectionContainer}>
-            <Text bold size={16} color={AppTheme.Black} bottomSpacing={15}>
-              选择引脚:
-            </Text>
-            <CustomDropdown
-              data={availablePins}
-              value={selectedPin}
-              onChange={setSelectedPin}
-              placeholder="选择GPIO引脚"
-              dropdownStyle={[
-                styles.dropdown,
-                { backgroundColor: AppTheme.skyBlue }
-              ]}
-              iconColor={AppTheme.Primary}
-              placeholderStyle={{
-                color: AppTheme.fontGray,
-                fontSize: 14,
-              }}
-              containerStyle={{
-                backgroundColor: AppTheme.skyBlue,
-              }}
-              activeColor={AppTheme.White}
-            />
-          </View>
-
-          {selectedPin && (
-            <View style={styles.pinStatusContainer}>
-              <Text bold size={16} color={AppTheme.Black} bottomSpacing={10}>
-                引脚 {selectedPin} 当前状态:
-              </Text>
-              <View style={[
-                styles.statusIndicator,
-                { 
-                  backgroundColor: getCurrentPinState() === true 
-                    ? AppTheme.lightGreen 
-                    : getCurrentPinState() === false 
-                    ? AppTheme.Red 
-                    : AppTheme.fontGray 
-                }
-              ]}>
-                <Text bold size={14} color={AppTheme.White}>
-                  {getCurrentPinState() === true 
-                    ? '高电平 (3.3V)' 
-                    : getCurrentPinState() === false 
-                    ? '低电平 (0V)' 
-                    : '未设置'}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          <View style={styles.controlButtonsContainer}>
-            <PrimaryButton
-              title="设置高电平 (HIGH)"
-              customStyles={[
-                styles.controlBtn,
-                { 
-                  backgroundColor: AppTheme.lightGreen,
-                  opacity: selectedPin && isConnected ? 1 : 0.6
-                }
-              ]}
-              onPress={() => handleSetPinState(true)}
-              disabled={!selectedPin || !isConnected}
-            />
-
-            <PrimaryButton
-              title="设置低电平 (LOW)"
-              customStyles={[
-                styles.controlBtn,
-                { 
-                  backgroundColor: AppTheme.Red,
-                  opacity: selectedPin && isConnected ? 1 : 0.6
-                }
-              ]}
-              onPress={() => handleSetPinState(false)}
-              disabled={!selectedPin || !isConnected}
-            />
-          </View>
-
-          <PrimaryButton
-            title="重置所有引脚"
-            customStyles={[
-              styles.resetBtn,
-              { 
-                backgroundColor: AppTheme.Yellow,
-                opacity: isConnected ? 1 : 0.6
-              }
-            ]}
-            onPress={handleResetAllPins}
-            disabled={!isConnected}
-          />
-
-          {Object.keys(pinStates).length > 0 && (
-            <View style={styles.activePinsContainer}>
-              <Text bold size={16} color={AppTheme.Black} bottomSpacing={10}>
-                活跃引脚状态:
-              </Text>
-              <View style={styles.activePinsList}>
-                {Object.entries(pinStates).map(([pin, state]) => (
-                  <View key={pin} style={styles.activePinItem}>
-                    <Text regular size={12} color={AppTheme.Black}>
-                      引脚 {pin}: 
-                    </Text>
-                    <Text 
-                      bold 
-                      size={12} 
-                      color={state ? AppTheme.lightGreen : AppTheme.Red}
-                    >
-                      {state ? 'HIGH' : 'LOW'}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
+        <Text bold size={14} color={AppTheme.fontGray} bottomSpacing={12}>
+          选择GPIO
+        </Text>
+        <CustomDropdown
+          data={availablePins}
+          value={selectedPin}
+          onChange={handlePinChange}
+          placeholder="GPIO0"
+          dropdownStyle={{
+            ...styles.dropdown,
+            backgroundColor: AppTheme.White,
+          }}
+          iconColor={AppTheme.Primary}
+          placeholderStyle={{ color: AppTheme.Black, fontSize: 14 }}
+          containerStyle={{ backgroundColor: AppTheme.White, borderRadius: 10 }}
+          activeColor={AppTheme.Primary}
+        />
       </SectionContainer>
+
+      {/* ── Input / Output segmented control ── */}
+      {selectedPin !== "" && (
+        <SectionContainer containerStyles={{ marginTop: SD.hp(20), padding: 0, paddingBottom: SD.hp(10) }}>
+          <View style={styles.modeSelector}>
+            <TouchableOpacity
+              style={[
+                styles.modeBtn,
+                styles.modeBtnLeft,
+                {
+                  backgroundColor:
+                    pinMode === "input" ? AppTheme.Primary : "#D6DCE8",
+                },
+              ]}
+              onPress={() => handleModeSelect("input")}
+            >
+              <Text
+                bold
+                size={16}
+                color={
+                  pinMode === "input" ? AppTheme.White : AppTheme.Black
+                }
+              >
+                输入
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.modeBtn,
+                styles.modeBtnRight,
+                {
+                  backgroundColor:
+                    pinMode === "output" ? AppTheme.Primary : "#D6DCE8",
+                },
+              ]}
+              onPress={() => handleModeSelect("output")}
+            >
+              <Text
+                bold
+                size={16}
+                color={
+                  pinMode === "output" ? AppTheme.White : AppTheme.Black
+                }
+              >
+                输出
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </SectionContainer>
+      )}
+
+      {/* ── Level display + toggle card ── */}
+      {pinMode !== null && (
+        <SectionContainer
+          containerStyles={{
+            marginTop: SD.hp(20),
+            paddingVertical: SD.hp(25),
+            paddingHorizontal: SD.wp(20),
+          }}
+        >
+          {loading ? (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color={AppTheme.Primary} />
+            </View>
+          ) : (
+            <>
+              <Text bold size={18} color={AppTheme.Black} bottomSpacing={20}>
+                {pinHigh ? "高电平" : "低电平"}
+              </Text>
+              <LargeToggle
+                value={pinHigh}
+                onToggle={handleToggle}
+                disabled={pinMode === "input"}
+              />
+            </>
+          )}
+        </SectionContainer>
+      )}
     </MainContainer>
   );
 };

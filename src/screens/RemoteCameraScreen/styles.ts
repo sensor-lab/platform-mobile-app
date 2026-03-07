@@ -2,43 +2,28 @@ import { StyleSheet } from "react-native";
 import { SD } from "../../utils";
 
 export const styles = StyleSheet.create({
-  controlContainer: {
+  content: {
     flex: 1,
+    paddingHorizontal: SD.wp(20),
+    paddingTop: SD.hp(20),
+  },
+  imageArea: {
+    flex: 1,
+    backgroundColor: "#EEF0F7",
+    borderRadius: 16,
+    padding: SD.wp(12),
+    justifyContent: "center",
     alignItems: "center",
+  },
+  buttonRow: {
+    paddingHorizontal: SD.wp(20),
     paddingVertical: SD.hp(20),
   },
-  statusContainer: {
+  takePhotoBtn: {
+    backgroundColor: "#354F8E",
+    borderRadius: 30,
+    minHeight: 52,
+    justifyContent: "center",
     alignItems: "center",
-    marginBottom: SD.hp(20),
-  },
-  recordingContainer: {
-    alignItems: "center",
-    marginBottom: SD.hp(20),
-  },
-  statusIndicator: {
-    paddingHorizontal: SD.wp(20),
-    paddingVertical: SD.hp(8),
-    borderRadius: 15,
-    minWidth: 80,
-    alignItems: "center",
-  },
-  photoCountContainer: {
-    alignItems: "center",
-    marginBottom: SD.hp(30),
-    paddingHorizontal: SD.wp(20),
-    paddingVertical: SD.hp(15),
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    width: "100%",
-  },
-  buttonContainer: {
-    width: "100%",
-    alignItems: "center",
-  },
-  controlBtn: {
-    width: "80%",
-    paddingVertical: SD.hp(15),
-    borderRadius: 10,
-    marginBottom: SD.hp(15),
   },
 });
