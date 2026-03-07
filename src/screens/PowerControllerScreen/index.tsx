@@ -6,6 +6,12 @@ import {
     Text,
 } from "@/src/components";
 import { useTheme } from "@/src/hooks";
+import { WebsocketService } from "@/src/services/payload_service";
+import { toast } from "@/src/utils/toast.utils";
+import {
+    constructNowEvent,
+    gpioHardwareOperation,
+} from '@sensorsparks/platform-api';
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -24,16 +30,33 @@ const availablePins = Array.from({ length: 20 }, (_, i) => ({
   value: String(i),
 }));
 
-// Dummy API: read GPIO input status
-const fetchGpioStatus = async (pin: string): Promise<boolean> => {
-  // TODO: Replace with real API call
-  return new Promise((resolve) => setTimeout(() => resolve(false), 600));
+const fetchGpioStatus = async (id: string, pin: string): Promise<boolean> => {
+  const opers: any[] = [];
+  gpioHardwareOperation(opers, Number(pin), "input", 0); // does not have pullup resistor
+  const event = constructNowEvent(opers);
+  const ws = new WebsocketService();
+  try {
+    await ws.connect();
+    const resp = await ws.executeCommand(id, JSON.stringify(event));
+    return JSON.parse(resp)["result"][0][0] === 1;
+  } finally {
+    ws.close();
+  }
 };
 
-// Dummy API: set GPIO output level
-const setGpioOutput = async (pin: string, high: boolean): Promise<boolean> => {
-  // TODO: Replace with real API call
-  return new Promise((resolve) => setTimeout(() => resolve(high), 300));
+// Set GPIO output level via WebSocket hardware operation
+const setGpioOutput = async (id: string, pin: string, high: boolean): Promise<boolean> => {
+  const opers: any[] = [];
+  gpioHardwareOperation(opers, Number(pin), "output", high ? 1 : 0);
+  const event = constructNowEvent(opers);
+  const ws = new WebsocketService();
+  try {
+    await ws.connect();
+    await ws.executeCommand(id, JSON.stringify(event));
+    return high;
+  } finally {
+    ws.close();
+  }
 };
 
 // ─── Large animated toggle ────────────────────────────────────────────────────
@@ -99,6 +122,7 @@ const LargeToggle = ({
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 const PowerControllerScreen = ({ navigation, route }) => {
+  const deviceId = route?.params?.id;
   const { AppTheme } = useTheme();
   const [selectedPin, setSelectedPin] = useState<string>("");
   const [pinMode, setPinMode] = useState<PinMode | null>(null);
@@ -118,7 +142,7 @@ const PowerControllerScreen = ({ navigation, route }) => {
       if (mode === "input") {
         setLoading(true);
         try {
-          const status = await fetchGpioStatus(selectedPin);
+          const status = await fetchGpioStatus(deviceId, selectedPin);
           setPinHigh(status);
         } catch {
           setPinHigh(false);
@@ -127,21 +151,22 @@ const PowerControllerScreen = ({ navigation, route }) => {
         }
       }
     },
-    [selectedPin],
+    [deviceId, selectedPin, pinMode],
   );
 
   const handleToggle = useCallback(async () => {
     if (pinMode !== "output" || !selectedPin) return;
     setLoading(true);
     try {
-      const result = await setGpioOutput(selectedPin, !pinHigh);
+      const result = await setGpioOutput(deviceId, selectedPin, !pinHigh);
       setPinHigh(result);
+      toast.success("发送成功");
     } catch {
-      // keep previous state on failure
+      toast.fail("失败", "发送硬件操作失败");
     } finally {
       setLoading(false);
     }
-  }, [selectedPin, pinHigh, pinMode]);
+  }, [deviceId, selectedPin, pinHigh, pinMode]);
 
   return (
     <MainContainer>
