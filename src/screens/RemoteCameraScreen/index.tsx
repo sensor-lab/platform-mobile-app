@@ -83,6 +83,27 @@ const RemoteCameraScreen = ({ navigation, route }) => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [shotTime, setShotTime] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [rotateDeg, setRotateDeg] = useState(0);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const isSideways = rotateDeg === 90 || rotateDeg === 270;
+
+  // When rotated 90/270°, scale the image so its width fills the canvas width.
+  // Since the image is sideways, we set width = canvasHeight (becomes the visual width)
+  // and height = canvasWidth (becomes the visual height), then let the rotation fill it.
+  const imageStyle = canvasSize.width > 0 && isSideways
+    ? {
+        width: canvasSize.height,
+        height: canvasSize.width,
+        transform: [{ rotate: `${rotateDeg}deg` }],
+      }
+    : {
+        width: '100%' as const,
+        height: '100%' as const,
+        borderRadius: 12,
+        transform: [{ rotate: `${rotateDeg}deg` }],
+      };
+
+  const handleRotate = () => setRotateDeg(prev => (prev + 90) % 360);
 
   const handleTakePhoto = async () => {
     setLoading(true);
@@ -126,11 +147,17 @@ const RemoteCameraScreen = ({ navigation, route }) => {
       />
 
       <View style={styles.content}>
-        <View style={styles.imageArea}>
+        <View
+          style={styles.imageArea}
+          onLayout={(e) => {
+            const { width, height } = e.nativeEvent.layout;
+            setCanvasSize({ width, height });
+          }}
+        >
           {imageUri ? (
             <Image
               source={{ uri: imageUri }}
-              style={{ width: '100%', height: '100%', borderRadius: 12 }}
+              style={imageStyle}
               resizeMode="contain"
             />
           ) : (
@@ -155,6 +182,11 @@ const RemoteCameraScreen = ({ navigation, route }) => {
               title="拍照"
               customStyles={[styles.takePhotoBtn, { flex: 1 }]}
               onPress={handleTakePhoto}
+            />
+            <PrimaryButton
+              title="旋转"
+              customStyles={[styles.takePhotoBtn, { flex: 1, backgroundColor: '#4B5563' }]}
+              onPress={handleRotate}
             />
             <PrimaryButton
               title="重置"
