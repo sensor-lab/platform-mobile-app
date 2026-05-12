@@ -2,413 +2,264 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
-import * as flatbuffers from "flatbuffers";
-
-import { FlatbuffersMessageOptions } from "../flatbuffersmsg/flatbuffers-message-options";
+import * as flatbuffers from 'flatbuffers';
 
 export class FlatbuffersCommand {
-  bb: flatbuffers.ByteBuffer | null = null;
+  bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
-  __init(i: number, bb: flatbuffers.ByteBuffer): FlatbuffersCommand {
-    this.bb_pos = i;
-    this.bb = bb;
-    return this;
-  }
+  __init(i:number, bb:flatbuffers.ByteBuffer):FlatbuffersCommand {
+  this.bb_pos = i;
+  this.bb = bb;
+  return this;
+}
 
-  static getRootAsFlatbuffersCommand(
-    bb: flatbuffers.ByteBuffer,
-    obj?: FlatbuffersCommand,
-  ): FlatbuffersCommand {
-    return (obj || new FlatbuffersCommand()).__init(
-      bb.readInt32(bb.position()) + bb.position(),
-      bb,
-    );
-  }
+static getRootAsFlatbuffersCommand(bb:flatbuffers.ByteBuffer, obj?:FlatbuffersCommand):FlatbuffersCommand {
+  return (obj || new FlatbuffersCommand()).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+}
 
-  static getSizePrefixedRootAsFlatbuffersCommand(
-    bb: flatbuffers.ByteBuffer,
-    obj?: FlatbuffersCommand,
-  ): FlatbuffersCommand {
-    bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
-    return (obj || new FlatbuffersCommand()).__init(
-      bb.readInt32(bb.position()) + bb.position(),
-      bb,
-    );
-  }
+static getSizePrefixedRootAsFlatbuffersCommand(bb:flatbuffers.ByteBuffer, obj?:FlatbuffersCommand):FlatbuffersCommand {
+  bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
+  return (obj || new FlatbuffersCommand()).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+}
 
-  /**
-   * created_at: unix timestamp when message was created
-   */
-  createdAt(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 4);
-    return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
-  }
+/**
+ * created_at: unix timestamp when message was created
+ */
+createdAt():number {
+  const offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
+}
 
-  /**
-   * command_type: command type identifier (unique to each application)
-   */
-  commandType(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 6);
-    return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
-  }
+/**
+ * command_type: command type identifier (unique to each application)
+ */
+commandType():number {
+  const offset = this.bb!.__offset(this.bb_pos, 6);
+  return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
+}
 
-  /**
-   * request_txid: TXID of the original message (for response message only)
-   */
-  requestTxid(index: number): number | null {
-    const offset = this.bb!.__offset(this.bb_pos, 8);
-    return offset
-      ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index)
-      : 0;
-  }
+/**
+ * request_txid: TXID of the original message (for response message only)
+ */
+requestTxid(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
 
-  requestTxidLength(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 8);
-    return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
-  }
+requestTxidLength():number {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
 
-  requestTxidArray(): Uint8Array | null {
-    const offset = this.bb!.__offset(this.bb_pos, 8);
-    return offset
-      ? new Uint8Array(
-          this.bb!.bytes().buffer,
-          this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset),
-          this.bb!.__vector_len(this.bb_pos + offset),
-        )
-      : null;
-  }
+requestTxidArray():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
 
-  /**
-   * status_code: for response message only
-   */
-  statusCode(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 10);
-    return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
-  }
+/**
+ * status_code: for response message only
+ */
+statusCode():number {
+  const offset = this.bb!.__offset(this.bb_pos, 10);
+  return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
+}
 
-  /**
-   * response_topic: will be used to route the response to a message
-   */
-  responseTopic(index: number): number | null {
-    const offset = this.bb!.__offset(this.bb_pos, 12);
-    return offset
-      ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index)
-      : 0;
-  }
+/**
+ * response_topic: will be used to route the response to a message
+ */
+responseTopic(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 12);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
 
-  responseTopicLength(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 12);
-    return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
-  }
+responseTopicLength():number {
+  const offset = this.bb!.__offset(this.bb_pos, 12);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
 
-  responseTopicArray(): Uint8Array | null {
-    const offset = this.bb!.__offset(this.bb_pos, 12);
-    return offset
-      ? new Uint8Array(
-          this.bb!.bytes().buffer,
-          this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset),
-          this.bb!.__vector_len(this.bb_pos + offset),
-        )
-      : null;
-  }
+responseTopicArray():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 12);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
 
-  /**
-   * expiry: unix timestamp after when to destroy the message
-   */
-  expiry(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 14);
-    return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
-  }
+/**
+ * expiry: unix timestamp after when to destroy the message
+ */
+expiry():number {
+  const offset = this.bb!.__offset(this.bb_pos, 14);
+  return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
+}
 
-  /**
-   * payload: opaque message payload as byte array
-   */
-  payload(index: number): number | null {
-    const offset = this.bb!.__offset(this.bb_pos, 16);
-    return offset
-      ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index)
-      : 0;
-  }
+/**
+ * payload: opaque message payload as byte array
+ */
+payload(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 16);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
 
-  payloadLength(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 16);
-    return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
-  }
+payloadLength():number {
+  const offset = this.bb!.__offset(this.bb_pos, 16);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
 
-  payloadArray(): Uint8Array | null {
-    const offset = this.bb!.__offset(this.bb_pos, 16);
-    return offset
-      ? new Uint8Array(
-          this.bb!.bytes().buffer,
-          this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset),
-          this.bb!.__vector_len(this.bb_pos + offset),
-        )
-      : null;
-  }
+payloadArray():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 16);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
 
-  /**
-   * options: structure holding message options
-   */
-  options(obj?: FlatbuffersMessageOptions): FlatbuffersMessageOptions | null {
-    const offset = this.bb!.__offset(this.bb_pos, 18);
-    return offset
-      ? (obj || new FlatbuffersMessageOptions()).__init(
-          this.bb!.__indirect(this.bb_pos + offset),
-          this.bb!,
-        )
-      : null;
-  }
+/**
+ * device_type: device identity coming from the certificate derived of Issuer CN
+ */
+deviceType(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 18);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
 
-  /**
-   * device_type: device identity coming from the certificate derived of Issuer CN
-   */
-  deviceType(index: number): number | null {
-    const offset = this.bb!.__offset(this.bb_pos, 20);
-    return offset
-      ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index)
-      : 0;
-  }
+deviceTypeLength():number {
+  const offset = this.bb!.__offset(this.bb_pos, 18);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
 
-  deviceTypeLength(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 20);
-    return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
-  }
+deviceTypeArray():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 18);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
 
-  deviceTypeArray(): Uint8Array | null {
-    const offset = this.bb!.__offset(this.bb_pos, 20);
-    return offset
-      ? new Uint8Array(
-          this.bb!.bytes().buffer,
-          this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset),
-          this.bb!.__vector_len(this.bb_pos + offset),
-        )
-      : null;
-  }
+/**
+ * device_id: device identity coming from the certificate derived of Subject CN
+ */
+deviceId(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 20);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
 
-  /**
-   * device_id: device identity coming from the certificate derived of Subject CN
-   */
-  deviceId(index: number): number | null {
-    const offset = this.bb!.__offset(this.bb_pos, 22);
-    return offset
-      ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index)
-      : 0;
-  }
+deviceIdLength():number {
+  const offset = this.bb!.__offset(this.bb_pos, 20);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
 
-  deviceIdLength(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 22);
-    return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
-  }
+deviceIdArray():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 20);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
 
-  deviceIdArray(): Uint8Array | null {
-    const offset = this.bb!.__offset(this.bb_pos, 22);
-    return offset
-      ? new Uint8Array(
-          this.bb!.bytes().buffer,
-          this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset),
-          this.bb!.__vector_len(this.bb_pos + offset),
-        )
-      : null;
-  }
+static startFlatbuffersCommand(builder:flatbuffers.Builder) {
+  builder.startObject(9);
+}
 
-  /**
-   * device_principal: device identity coming from the certificate principalextension
-   */
-  devicePrincipal(index: number): number | null {
-    const offset = this.bb!.__offset(this.bb_pos, 24);
-    return offset
-      ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index)
-      : 0;
-  }
+static addCreatedAt(builder:flatbuffers.Builder, createdAt:number) {
+  builder.addFieldInt32(0, createdAt, 0);
+}
 
-  devicePrincipalLength(): number {
-    const offset = this.bb!.__offset(this.bb_pos, 24);
-    return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
-  }
+static addCommandType(builder:flatbuffers.Builder, commandType:number) {
+  builder.addFieldInt32(1, commandType, 0);
+}
 
-  devicePrincipalArray(): Uint8Array | null {
-    const offset = this.bb!.__offset(this.bb_pos, 24);
-    return offset
-      ? new Uint8Array(
-          this.bb!.bytes().buffer,
-          this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset),
-          this.bb!.__vector_len(this.bb_pos + offset),
-        )
-      : null;
-  }
+static addRequestTxid(builder:flatbuffers.Builder, requestTxidOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(2, requestTxidOffset, 0);
+}
 
-  static startFlatbuffersCommand(builder: flatbuffers.Builder) {
-    builder.startObject(11);
+static createRequestTxidVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
   }
+  return builder.endVector();
+}
 
-  static addCreatedAt(builder: flatbuffers.Builder, createdAt: number) {
-    builder.addFieldInt32(0, createdAt, 0);
-  }
+static startRequestTxidVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
 
-  static addCommandType(builder: flatbuffers.Builder, commandType: number) {
-    builder.addFieldInt32(1, commandType, 0);
-  }
+static addStatusCode(builder:flatbuffers.Builder, statusCode:number) {
+  builder.addFieldInt32(3, statusCode, 0);
+}
 
-  static addRequestTxid(
-    builder: flatbuffers.Builder,
-    requestTxidOffset: flatbuffers.Offset,
-  ) {
-    builder.addFieldOffset(2, requestTxidOffset, 0);
-  }
+static addResponseTopic(builder:flatbuffers.Builder, responseTopicOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(4, responseTopicOffset, 0);
+}
 
-  static createRequestTxidVector(
-    builder: flatbuffers.Builder,
-    data: number[] | Uint8Array,
-  ): flatbuffers.Offset {
-    builder.startVector(1, data.length, 1);
-    for (let i = data.length - 1; i >= 0; i--) {
-      builder.addInt8(data[i]!);
-    }
-    return builder.endVector();
+static createResponseTopicVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
   }
+  return builder.endVector();
+}
 
-  static startRequestTxidVector(
-    builder: flatbuffers.Builder,
-    numElems: number,
-  ) {
-    builder.startVector(1, numElems, 1);
-  }
+static startResponseTopicVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
 
-  static addStatusCode(builder: flatbuffers.Builder, statusCode: number) {
-    builder.addFieldInt32(3, statusCode, 0);
-  }
+static addExpiry(builder:flatbuffers.Builder, expiry:number) {
+  builder.addFieldInt32(5, expiry, 0);
+}
 
-  static addResponseTopic(
-    builder: flatbuffers.Builder,
-    responseTopicOffset: flatbuffers.Offset,
-  ) {
-    builder.addFieldOffset(4, responseTopicOffset, 0);
-  }
+static addPayload(builder:flatbuffers.Builder, payloadOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(6, payloadOffset, 0);
+}
 
-  static createResponseTopicVector(
-    builder: flatbuffers.Builder,
-    data: number[] | Uint8Array,
-  ): flatbuffers.Offset {
-    builder.startVector(1, data.length, 1);
-    for (let i = data.length - 1; i >= 0; i--) {
-      builder.addInt8(data[i]!);
-    }
-    return builder.endVector();
+static createPayloadVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
   }
+  return builder.endVector();
+}
 
-  static startResponseTopicVector(
-    builder: flatbuffers.Builder,
-    numElems: number,
-  ) {
-    builder.startVector(1, numElems, 1);
-  }
+static startPayloadVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
 
-  static addExpiry(builder: flatbuffers.Builder, expiry: number) {
-    builder.addFieldInt32(5, expiry, 0);
-  }
+static addDeviceType(builder:flatbuffers.Builder, deviceTypeOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(7, deviceTypeOffset, 0);
+}
 
-  static addPayload(
-    builder: flatbuffers.Builder,
-    payloadOffset: flatbuffers.Offset,
-  ) {
-    builder.addFieldOffset(6, payloadOffset, 0);
+static createDeviceTypeVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
   }
+  return builder.endVector();
+}
 
-  static createPayloadVector(
-    builder: flatbuffers.Builder,
-    data: number[] | Uint8Array,
-  ): flatbuffers.Offset {
-    builder.startVector(1, data.length, 1);
-    for (let i = data.length - 1; i >= 0; i--) {
-      builder.addInt8(data[i]!);
-    }
-    return builder.endVector();
-  }
+static startDeviceTypeVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
 
-  static startPayloadVector(builder: flatbuffers.Builder, numElems: number) {
-    builder.startVector(1, numElems, 1);
-  }
+static addDeviceId(builder:flatbuffers.Builder, deviceIdOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(8, deviceIdOffset, 0);
+}
 
-  static addOptions(
-    builder: flatbuffers.Builder,
-    optionsOffset: flatbuffers.Offset,
-  ) {
-    builder.addFieldOffset(7, optionsOffset, 0);
+static createDeviceIdVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
   }
+  return builder.endVector();
+}
 
-  static addDeviceType(
-    builder: flatbuffers.Builder,
-    deviceTypeOffset: flatbuffers.Offset,
-  ) {
-    builder.addFieldOffset(8, deviceTypeOffset, 0);
-  }
+static startDeviceIdVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
 
-  static createDeviceTypeVector(
-    builder: flatbuffers.Builder,
-    data: number[] | Uint8Array,
-  ): flatbuffers.Offset {
-    builder.startVector(1, data.length, 1);
-    for (let i = data.length - 1; i >= 0; i--) {
-      builder.addInt8(data[i]!);
-    }
-    return builder.endVector();
-  }
+static endFlatbuffersCommand(builder:flatbuffers.Builder):flatbuffers.Offset {
+  const offset = builder.endObject();
+  return offset;
+}
 
-  static startDeviceTypeVector(builder: flatbuffers.Builder, numElems: number) {
-    builder.startVector(1, numElems, 1);
-  }
-
-  static addDeviceId(
-    builder: flatbuffers.Builder,
-    deviceIdOffset: flatbuffers.Offset,
-  ) {
-    builder.addFieldOffset(9, deviceIdOffset, 0);
-  }
-
-  static createDeviceIdVector(
-    builder: flatbuffers.Builder,
-    data: number[] | Uint8Array,
-  ): flatbuffers.Offset {
-    builder.startVector(1, data.length, 1);
-    for (let i = data.length - 1; i >= 0; i--) {
-      builder.addInt8(data[i]!);
-    }
-    return builder.endVector();
-  }
-
-  static startDeviceIdVector(builder: flatbuffers.Builder, numElems: number) {
-    builder.startVector(1, numElems, 1);
-  }
-
-  static addDevicePrincipal(
-    builder: flatbuffers.Builder,
-    devicePrincipalOffset: flatbuffers.Offset,
-  ) {
-    builder.addFieldOffset(10, devicePrincipalOffset, 0);
-  }
-
-  static createDevicePrincipalVector(
-    builder: flatbuffers.Builder,
-    data: number[] | Uint8Array,
-  ): flatbuffers.Offset {
-    builder.startVector(1, data.length, 1);
-    for (let i = data.length - 1; i >= 0; i--) {
-      builder.addInt8(data[i]!);
-    }
-    return builder.endVector();
-  }
-
-  static startDevicePrincipalVector(
-    builder: flatbuffers.Builder,
-    numElems: number,
-  ) {
-    builder.startVector(1, numElems, 1);
-  }
-
-  static endFlatbuffersCommand(
-    builder: flatbuffers.Builder,
-  ): flatbuffers.Offset {
-    const offset = builder.endObject();
-    return offset;
-  }
+static createFlatbuffersCommand(builder:flatbuffers.Builder, createdAt:number, commandType:number, requestTxidOffset:flatbuffers.Offset, statusCode:number, responseTopicOffset:flatbuffers.Offset, expiry:number, payloadOffset:flatbuffers.Offset, deviceTypeOffset:flatbuffers.Offset, deviceIdOffset:flatbuffers.Offset):flatbuffers.Offset {
+  FlatbuffersCommand.startFlatbuffersCommand(builder);
+  FlatbuffersCommand.addCreatedAt(builder, createdAt);
+  FlatbuffersCommand.addCommandType(builder, commandType);
+  FlatbuffersCommand.addRequestTxid(builder, requestTxidOffset);
+  FlatbuffersCommand.addStatusCode(builder, statusCode);
+  FlatbuffersCommand.addResponseTopic(builder, responseTopicOffset);
+  FlatbuffersCommand.addExpiry(builder, expiry);
+  FlatbuffersCommand.addPayload(builder, payloadOffset);
+  FlatbuffersCommand.addDeviceType(builder, deviceTypeOffset);
+  FlatbuffersCommand.addDeviceId(builder, deviceIdOffset);
+  return FlatbuffersCommand.endFlatbuffersCommand(builder);
+}
 }

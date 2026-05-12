@@ -4,7 +4,6 @@
 
 export { FlatbuffersCommand } from "./flatbuffersmsg/flatbuffers-command";
 export { FlatbuffersEnvelope } from "./flatbuffersmsg/flatbuffers-envelope";
-export { FlatbuffersMessageOptions } from "./flatbuffersmsg/flatbuffers-message-options";
 export { FlatbuffersStream } from "./flatbuffersmsg/flatbuffers-stream";
 export { FlatbuffersStreamAck } from "./flatbuffersmsg/flatbuffers-stream-ack";
 export { FlatbuffersSubscribe } from "./flatbuffersmsg/flatbuffers-subscribe";

@@ -32,38 +32,20 @@ kind():number {
 }
 
 /**
- * namespace: change the namespace to consume in other topics
- */
-namespacePrefix(index: number):number|null {
-  const offset = this.bb!.__offset(this.bb_pos, 6);
-  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
-}
-
-namespacePrefixLength():number {
-  const offset = this.bb!.__offset(this.bb_pos, 6);
-  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
-}
-
-namespacePrefixArray():Uint8Array|null {
-  const offset = this.bb!.__offset(this.bb_pos, 6);
-  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
-}
-
-/**
  * name: name of the queue that will be declared and bind to the topics
  */
 name(index: number):number|null {
-  const offset = this.bb!.__offset(this.bb_pos, 8);
+  const offset = this.bb!.__offset(this.bb_pos, 6);
   return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
 }
 
 nameLength():number {
-  const offset = this.bb!.__offset(this.bb_pos, 8);
+  const offset = this.bb!.__offset(this.bb_pos, 6);
   return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
 }
 
 nameArray():Uint8Array|null {
-  const offset = this.bb!.__offset(this.bb_pos, 8);
+  const offset = this.bb!.__offset(this.bb_pos, 6);
   return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
 
@@ -71,46 +53,30 @@ nameArray():Uint8Array|null {
  * error: If the server denied the subscription sends an error
  */
 error(index: number):number|null {
-  const offset = this.bb!.__offset(this.bb_pos, 10);
+  const offset = this.bb!.__offset(this.bb_pos, 8);
   return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
 }
 
 errorLength():number {
-  const offset = this.bb!.__offset(this.bb_pos, 10);
+  const offset = this.bb!.__offset(this.bb_pos, 8);
   return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
 }
 
 errorArray():Uint8Array|null {
-  const offset = this.bb!.__offset(this.bb_pos, 10);
+  const offset = this.bb!.__offset(this.bb_pos, 8);
   return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
 
 static startFlatbuffersUnsubscribe(builder:flatbuffers.Builder) {
-  builder.startObject(4);
+  builder.startObject(3);
 }
 
 static addKind(builder:flatbuffers.Builder, kind:number) {
   builder.addFieldInt8(0, kind, 0);
 }
 
-static addNamespacePrefix(builder:flatbuffers.Builder, namespacePrefixOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(1, namespacePrefixOffset, 0);
-}
-
-static createNamespacePrefixVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
-  builder.startVector(1, data.length, 1);
-  for (let i = data.length - 1; i >= 0; i--) {
-    builder.addInt8(data[i]!);
-  }
-  return builder.endVector();
-}
-
-static startNamespacePrefixVector(builder:flatbuffers.Builder, numElems:number) {
-  builder.startVector(1, numElems, 1);
-}
-
 static addName(builder:flatbuffers.Builder, nameOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(2, nameOffset, 0);
+  builder.addFieldOffset(1, nameOffset, 0);
 }
 
 static createNameVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
@@ -126,7 +92,7 @@ static startNameVector(builder:flatbuffers.Builder, numElems:number) {
 }
 
 static addError(builder:flatbuffers.Builder, errorOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(3, errorOffset, 0);
+  builder.addFieldOffset(2, errorOffset, 0);
 }
 
 static createErrorVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
@@ -146,10 +112,9 @@ static endFlatbuffersUnsubscribe(builder:flatbuffers.Builder):flatbuffers.Offset
   return offset;
 }
 
-static createFlatbuffersUnsubscribe(builder:flatbuffers.Builder, kind:number, namespacePrefixOffset:flatbuffers.Offset, nameOffset:flatbuffers.Offset, errorOffset:flatbuffers.Offset):flatbuffers.Offset {
+static createFlatbuffersUnsubscribe(builder:flatbuffers.Builder, kind:number, nameOffset:flatbuffers.Offset, errorOffset:flatbuffers.Offset):flatbuffers.Offset {
   FlatbuffersUnsubscribe.startFlatbuffersUnsubscribe(builder);
   FlatbuffersUnsubscribe.addKind(builder, kind);
-  FlatbuffersUnsubscribe.addNamespacePrefix(builder, namespacePrefixOffset);
   FlatbuffersUnsubscribe.addName(builder, nameOffset);
   FlatbuffersUnsubscribe.addError(builder, errorOffset);
   return FlatbuffersUnsubscribe.endFlatbuffersUnsubscribe(builder);

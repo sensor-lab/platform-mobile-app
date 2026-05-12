@@ -8,7 +8,6 @@ import { v4 as uuidv4 } from "uuid";
 import {
     FlatbuffersCommand,
     FlatbuffersEnvelope,
-    FlatbuffersMessageOptions,
     FlatbuffersSubscribe,
     FlatbuffersUnsubscribe,
     Message,
@@ -118,11 +117,6 @@ class WebsocketService {
     payload: string,
     deviceType: string,
     deviceID: string,
-    devicePrincipal: string,
-    responseSubscribed: any,
-    qos: number,
-    token: string,
-    signature: string,
     responseTopic: string,
   ): Uint8Array {
     const builder = new flatbuffers.Builder(1024);
@@ -130,20 +124,6 @@ class WebsocketService {
       const encoder = new TextEncoder();
       const epochSec = Math.floor(Date.now() / 1000);
       const expiryEpochSec = Math.floor(Date.now() / 1000) + 20 * 60;
-      const tokenOffset = builder.createByteVector(encoder.encode(token));
-      const signatureOffset = builder.createByteVector(
-        encoder.encode(signature),
-      );
-      FlatbuffersMessageOptions.createResponseSubscribedVector(
-        builder,
-        responseSubscribed,
-      );
-      FlatbuffersMessageOptions.startFlatbuffersMessageOptions(builder);
-      FlatbuffersMessageOptions.addToken(builder, tokenOffset);
-      FlatbuffersMessageOptions.addQos(builder, qos);
-      FlatbuffersMessageOptions.addSignature(builder, signatureOffset);
-      const optionOffset =
-        FlatbuffersMessageOptions.endFlatbuffersMessageOptions(builder);
 
       const payloadOffset = builder.createByteVector(encoder.encode(payload));
       const responseTopicOffset = builder.createByteVector(
@@ -153,19 +133,14 @@ class WebsocketService {
         encoder.encode(deviceType),
       );
       const deviceIDOffset = builder.createByteVector(encoder.encode(deviceID));
-      const devicePrincipalOffset = builder.createByteVector(
-        encoder.encode(devicePrincipal),
-      );
       FlatbuffersCommand.startFlatbuffersCommand(builder);
       FlatbuffersCommand.addCreatedAt(builder, epochSec);
       FlatbuffersCommand.addCommandType(builder, commandType.valueOf());
       FlatbuffersCommand.addResponseTopic(builder, responseTopicOffset);
       FlatbuffersCommand.addExpiry(builder, expiryEpochSec);
       FlatbuffersCommand.addPayload(builder, payloadOffset);
-      FlatbuffersCommand.addOptions(builder, optionOffset);
       FlatbuffersCommand.addDeviceType(builder, deviceTypeOffset);
       FlatbuffersCommand.addDeviceId(builder, deviceIDOffset);
-      FlatbuffersCommand.addDevicePrincipal(builder, devicePrincipalOffset);
       const cmdOffset = FlatbuffersCommand.endFlatbuffersCommand(builder);
 
       const txidOffset = builder.createByteVector(encoder.encode(this.txid));
@@ -195,7 +170,6 @@ class WebsocketService {
     messageID: string,
     name: string,
     error: string,
-    namespace: string,
     kind: number,
   ): Uint8Array {
     const encoder = new TextEncoder();
@@ -203,14 +177,12 @@ class WebsocketService {
     const builder = new flatbuffers.Builder(1024);
     const nameOffset = builder.createByteVector(encoder.encode(name));
     const errorOffset = builder.createByteVector(encoder.encode(error));
-    const namespaceOffset = builder.createByteVector(encoder.encode(namespace));
 
     FlatbuffersSubscribe.startFlatbuffersSubscribe(builder);
 
     FlatbuffersSubscribe.addKind(builder, kind);
     FlatbuffersSubscribe.addName(builder, nameOffset);
     FlatbuffersSubscribe.addError(builder, errorOffset);
-    FlatbuffersSubscribe.addNamespacePrefix(builder, namespaceOffset);
     const subscribe = FlatbuffersSubscribe.endFlatbuffersSubscribe(builder);
 
     const txidOffset = builder.createByteVector(encoder.encode(this.txid));
@@ -234,7 +206,6 @@ class WebsocketService {
     messageID: string,
     name: string,
     error: string,
-    namespace: string,
     kind: number,
   ): Uint8Array {
     const encoder = new TextEncoder();
@@ -242,14 +213,12 @@ class WebsocketService {
     const builder = new flatbuffers.Builder(1024);
     const nameOffset = builder.createByteVector(encoder.encode(name));
     const errorOffset = builder.createByteVector(encoder.encode(error));
-    const namespaceOffset = builder.createByteVector(encoder.encode(namespace));
 
     FlatbuffersUnsubscribe.startFlatbuffersUnsubscribe(builder);
 
     FlatbuffersUnsubscribe.addKind(builder, kind);
     FlatbuffersUnsubscribe.addName(builder, nameOffset);
     FlatbuffersUnsubscribe.addError(builder, errorOffset);
-    FlatbuffersUnsubscribe.addNamespacePrefix(builder, namespaceOffset);
     const subscribe = FlatbuffersUnsubscribe.endFlatbuffersUnsubscribe(builder);
 
     const txidOffset = builder.createByteVector(encoder.encode(this.txid));
@@ -271,22 +240,22 @@ class WebsocketService {
   public async connect(): Promise<string> {
     return this.ws.connect({
       "X-Ssl-Client-Cert":
-        "MIIC3TCCAcUCFDXGga4JSMEujL5rMZabeeHFpTmWMA0GCSqGSIb3DQEBCwUAMC4x" +
+        "MIIC5DCCAcwCFC1/sML6wbqRK9IQamql9wGzzky7MA0GCSqGSIb3DQEBCwUAMC4x" +
         "FTATBgNVBAoMDFNlbnNvcnNwYXJrczEVMBMGA1UEAwwMU2Vuc29yU3BhcmtzMB4X" +
-        "DTI2MDIwODA3MTIxNFoXDTM2MDIwNjA3MTIxNFowKDEVMBMGA1UECgwMU2Vuc29y" +
-        "c3BhcmtzMQ8wDQYDVQQDDAZtb2JpbGUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw" +
-        "ggEKAoIBAQCuX2U/V4IL8bSman8eNZx9wQukOaxfaHGvCm8o7AiP3jXcOvs8G490" +
-        "ijl9+zN8KfGHtGOrW/3ejc02OEpuk1glPDfbJSmfFNg9e/SuukeuRWhG4e0uPhCV" +
-        "mnk869Ep0Y2sdmHrO7n2RVxLFMj1v2Du7QY/EgLc5p7i1q/tcDSmApdP+u32vrrw" +
-        "Et8vvdHGDXEAVubkxnTu0gZuLYRQhcl/f4WgBFnJfn5hhr/Kr61NlNosHZ8c9Hnh" +
-        "diEQrDf3MeGFldPMykwHzyhpVBTJj8fxyLYKqqY+physmGtOfl3PiYgsYCSkx4gI" +
-        "WClCv6o5tqU742cTn/NlAKLUL7X/d6Z9AgMBAAEwDQYJKoZIhvcNAQELBQADggEB" +
-        "AB00M6MXh/j1UJZxmgcK6cICoQ8VT/EwbajmtjMJhkAp3OSKc/vd8STkiGVus7BZ" +
-        "0Ee07poMUMyt/9AG2ex6TmSBpdQDrvPgvL0jOjXrMa4W5xSYbliBbrGKOfZAdCNv" +
-        "VJt0pRWsoduDm2DENBggGNXqgL4jzuw1D/ybc99kLiHG01LmTcq0mTo/LYL+8RbF" +
-        "WDyjNjU/VkyNSSCzf/XX9kIWzC4geu/sbMJZNAE493W9nwZffCnGOBknSgCWfIBj" +
-        "nfm0lwAT5ckAS0FD1v42gY7NRRZFT6X8BBHgVCtp4aunSZxgbJHyOOFDgn/KLL80" +
-        "3/sBeQyj41fpeTLptjOD73g=",
+        "DTI2MDUxMDE0MzEzN1oXDTM2MDUwNzE0MzEzN1owLzEVMBMGA1UECgwMU2Vuc29y" +
+        "c3BhcmtzMRYwFAYDVQQDDA1tb2JpbGUtY2xpZW50MIIBIjANBgkqhkiG9w0BAQEF" +
+        "AAOCAQ8AMIIBCgKCAQEA0qywm1KFObCd3CJ4wNDB2M8sXw8K3MHMez3QoocrR9lE" +
+        "JL+A9s4dK2MOqU5C/PBPxjcviY63Rj4jz9y5g1fJrxdhqcD7vPBb6WyFLxCaoxxu" +
+        "g2w2pRmhZ7xKDs3xl7C0mCVQnULHbeo7qWPD33ncZ6n0EaYuIHMfGn924O+uC/hy" +
+        "ODFrcTqjV+O/kL25UGlCJwWeqIP6nuvORza0PoDodznRqW6nYdJ5S2TPY7cpN/d5" +
+        "BViFUIapa63+IPI92ddPYdS0nAZpctMVVQMunkMYhruzOG17SKUiNJNN12K01/P7" +
+        "TrsvutqNkS0ZI3kzHXJ5rG5/xWlTt8Xy7+K1xNFT7wIDAQABMA0GCSqGSIb3DQEB" +
+        "CwUAA4IBAQBKAgGmkiTzzEfqWPBrpofhXnb08N9gNh701EVqgD3H40nVA/7AjZOw" +
+        "gF3b421AnQSYR7AE7ObT4/Akab28Rs5cW3Ie0I0hnEaZhSihSyGwcgZUgVyPmkCO" +
+        "IaRJiaMF/KDCIRorY+ezvx7/F7CA1Uncd3GWPl5CI2bEsYjNsBTEKtX+lVoOlHlr" +
+        "/aioA/DXhWECfFijrW3phtzVpjwkfyYG+u5MgVM2srY9wJzdt0ckor2YPjnhp5zV" +
+        "zCmQrFD+/zLhs+4ns4ehc6RVX2E2EbSjZA27stkJl13JariwqxDfU6n/DbEveZoN" +
+        "JdMTxglzFcMZ/gOY99TZHlbSW9RYvXOP",
     });
   }
 
@@ -298,7 +267,6 @@ class WebsocketService {
     topic: string,
     queueName: string,
     error: string,
-    namespace: string,
     kind: TopicType,
     timeoutMs: number = 5000,
   ): Promise<Uint8Array> {
@@ -308,7 +276,6 @@ class WebsocketService {
       messageID,
       queueName,
       error,
-      namespace,
       kind.valueOf(),
     );
     return new Promise((resolve, reject) => {
@@ -331,7 +298,6 @@ class WebsocketService {
     topic: string,
     queueName: string,
     error: string,
-    namespace: string,
     kind: TopicType,
     timeoutMs: number = 5000,
   ): Promise<Uint8Array> {
@@ -341,7 +307,6 @@ class WebsocketService {
       messageID,
       queueName,
       error,
-      namespace,
       kind.valueOf(),
     );
     return new Promise((resolve, reject) => {
@@ -376,11 +341,6 @@ class WebsocketService {
       payload,
       this.deviceType,
       deviceID,
-      this.devicePrincipal,
-      this.responseSubscribed,
-      this.qos,
-      this.token,
-      this.signature,
       responseTopic,
     );
 
@@ -425,7 +385,6 @@ class WebsocketService {
       respTopic,
       respTopic,
       "",
-      "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
     console.log(`subResp: ${subResp.length}`);
@@ -455,7 +414,6 @@ class WebsocketService {
       respTopic,
       respTopic,
       "",
-      "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
 
@@ -477,7 +435,6 @@ class WebsocketService {
     const subResp = await this.sendSubscribe(
       respTopic,
       respTopic,
-      "",
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
@@ -503,7 +460,6 @@ class WebsocketService {
     await this.sendUnsubscribe(
       respTopic,
       respTopic,
-      "",
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
@@ -535,7 +491,6 @@ class WebsocketService {
       respTopic,
       respTopic,
       "",
-      "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
     console.log(`subResp: ${subResp.length}`);
@@ -561,7 +516,6 @@ class WebsocketService {
     const unsubResp = this.sendUnsubscribe(
       respTopic,
       respTopic,
-      "",
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );

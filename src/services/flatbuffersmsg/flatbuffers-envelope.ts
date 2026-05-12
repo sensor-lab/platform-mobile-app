@@ -5,7 +5,7 @@
 import * as flatbuffers from "flatbuffers";
 
 import {
-  Message
+    Message
 } from "../flatbuffersmsg/message";
 
 export class FlatbuffersEnvelope {
