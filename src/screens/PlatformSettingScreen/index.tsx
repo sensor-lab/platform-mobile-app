@@ -26,16 +26,22 @@ import { styles } from "./styles";
 const appCategory = [
   { label: "发光类", value: "lightCategory" },
   { label: "传感器类", value: "sensorCategory" },
+  { label: "图像与声音类", value: "imageSoundCategory" },
+  { label: "电源与储能", value: "powerCategory" },
 ];
 
-const apps: Record<string, { label: string; value: string }[]> = {
+const apps: Record<string, { label: string; value: string; icon: number }[]> = {
     "lightCategory": [{
-        label: "灯带控制器", value: "ledStripController"
+        label: "灯带控制器", value: "ledStripController", icon: Images.ledStripApp
     }],
     "sensorCategory": [{
-        label: "环境监测应用", value: "environmentMonitor"
-    }, {
-        label: "温湿度传感器", value: "temperatureHumiditySensor"
+        label: "环境监测应用", value: "environmentMonitor", icon: Images.environmentApp
+    }],
+    "imageSoundCategory": [{
+        label: "远程照相机", value: "remoteCamera", icon: Images.remoteCameraApp
+    }],
+    "powerCategory": [{
+        label: "电源控制器", value: "powerController", icon: Images.powerControllerApp
     }]
 }
 
@@ -94,6 +100,15 @@ const PlatformSettingScreen = ({ navigation, route }) => {
     switch (appValue) {
       case "ledStripController":
         navigation.navigate(ScreenNames.LedStripController, { id });
+        break;
+      case "environmentMonitor":
+        navigation.navigate(ScreenNames.EnvironmentMonitorScreen, { id });
+        break;
+      case "remoteCamera":
+        navigation.navigate(ScreenNames.RemoteCameraScreen, { id });
+        break;
+      case "powerController":
+        navigation.navigate(ScreenNames.PowerControllerScreen, { id });
         break;
       default:
         console.log(`App not implemented: ${appValue}`);
@@ -181,6 +196,11 @@ const PlatformSettingScreen = ({ navigation, route }) => {
       setShowAddAppsModal(false);
       console.log(`Added app: ${appValue}`);
     }
+  };
+
+  const handleRemoveApp = (appValue: string) => {
+    setAddedApps(addedApps.filter(app => app !== appValue));
+    console.log(`Removed app: ${appValue}`);
   };
 
   // const statusFontColor =
@@ -303,9 +323,11 @@ const PlatformSettingScreen = ({ navigation, route }) => {
           return (
             <PrinterSettingScreenCard
               key={`app-${index}`}
-              icon={Images.platform}  // TODO: Add proper icons for apps
+              icon={appDetails.icon}
               title={appDetails.label}
               onPress={() => handleAppClick(appValue)}
+              onRemove={() => handleRemoveApp(appValue)}
+              isRemovable={true}
             />
           );
         })}
