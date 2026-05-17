@@ -45,19 +45,12 @@ function base64ToUint8(str: string): Uint8Array {
 }
 
 class WebsocketService {
-  private txid: string;
-  private qos = 50;
   private deviceType = "";
-  private devicePrincipal = "";
-  private responseSubscribed = [];
-  private token = "";
-  private signature = "";
   private url: string = "wss://iot.sensorsparks.com:8080/testapi";
   private ws: WebSocketWithSelfSignedCert;
   private pending = new Map<string, PendingRequest>();
 
   constructor() {
-    this.txid = uuidv4();
     this.ws = WebSocketWithSelfSignedCert.getInstance(this.url);
     this.ws.onBinaryMessage(this.handleBinaryMessage);
     this.ws.onClose(() => {
@@ -69,49 +62,43 @@ class WebsocketService {
     this.ws.onError(() => {
       console.log("websocket error!");
     });
-    console.log(`websocket txid: ${this.txid}`);
   }
 
   private handleBinaryMessage = (data: string): void => {
     const bb = new flatbuffers.ByteBuffer(base64ToUint8(data));
     const envelope = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(bb);
 
-    const topic_bytes = envelope.topicArray(); // Uint8Array | null
-    const topic = topic_bytes
-      ? new TextDecoder("utf-8").decode(topic_bytes)
-      : "";
-
+    let bytes = envelope.topicArray(); // Uint8Array | null
+    const topic = bytes ? new TextDecoder("utf-8").decode(bytes) : "";
+    bytes = envelope.txidArray();
     let txid = "";
     if (envelope.messageType() == Message.FlatbuffersCommand) {
-      if (topic.includes("ephemeral")) {
-        txid = this.txid;
-      } else {
-        const cmd: FlatbuffersCommand = envelope.message(
-          new FlatbuffersCommand(),
-        );
-        const bytes = cmd.requestTxidArray();
-        txid = bytes ? new TextDecoder("utf-8").decode(bytes) : "";
-      }
+      const cmd: FlatbuffersCommand = envelope.message(
+        new FlatbuffersCommand(),
+      );
+      const bytes = cmd.requestTxidArray();
+      txid = bytes ? new TextDecoder("utf-8").decode(bytes) : "";
     } else {
       const bytes = envelope.txidArray();
       txid = bytes ? new TextDecoder("utf-8").decode(bytes) : "";
     }
 
-    console.log(`Received binary message, txid: ${txid} topic: ${topic}`);
-
-    const pending = this.pending.get("xyz");
+    const pending = this.pending.get(txid);
     if (!pending) {
-      console.warn("Unmatched WS message:", txid);
+      console.warn(
+        `handleBinaryMessage: unmatched txid ${txid} for topic ${topic}， type: ${envelope.messageType()}`,
+      );
       return;
     }
 
     clearTimeout(pending.timeout);
-    this.pending.delete("xyz");
+    this.pending.delete(txid);
     pending.resolve(base64ToUint8(data));
   };
 
   private constructCommand(
     topic: string,
+    txid: string,
     messageId: string,
     commandType: CommandType,
     payload: string,
@@ -143,7 +130,7 @@ class WebsocketService {
       FlatbuffersCommand.addDeviceId(builder, deviceIDOffset);
       const cmdOffset = FlatbuffersCommand.endFlatbuffersCommand(builder);
 
-      const txidOffset = builder.createByteVector(encoder.encode(this.txid));
+      const txidOffset = builder.createByteVector(encoder.encode(txid));
       const topicOffset = builder.createByteVector(encoder.encode(topic));
       const messageIDOffset = builder.createByteVector(
         encoder.encode(messageId),
@@ -167,6 +154,7 @@ class WebsocketService {
 
   private constructSubscribe(
     topic: string,
+    txid: string,
     messageID: string,
     name: string,
     error: string,
@@ -185,7 +173,7 @@ class WebsocketService {
     FlatbuffersSubscribe.addError(builder, errorOffset);
     const subscribe = FlatbuffersSubscribe.endFlatbuffersSubscribe(builder);
 
-    const txidOffset = builder.createByteVector(encoder.encode(this.txid));
+    const txidOffset = builder.createByteVector(encoder.encode(txid));
     const topicOffset = builder.createByteVector(encoder.encode(topic));
     const messageIDOffset = builder.createByteVector(encoder.encode(messageID));
 
@@ -203,6 +191,7 @@ class WebsocketService {
 
   private constructUnsubscribe(
     topic: string,
+    txid: string,
     messageID: string,
     name: string,
     error: string,
@@ -221,7 +210,7 @@ class WebsocketService {
     FlatbuffersUnsubscribe.addError(builder, errorOffset);
     const subscribe = FlatbuffersUnsubscribe.endFlatbuffersUnsubscribe(builder);
 
-    const txidOffset = builder.createByteVector(encoder.encode(this.txid));
+    const txidOffset = builder.createByteVector(encoder.encode(txid));
     const topicOffset = builder.createByteVector(encoder.encode(topic));
     const messageIDOffset = builder.createByteVector(encoder.encode(messageID));
 
@@ -265,27 +254,33 @@ class WebsocketService {
 
   public sendSubscribe(
     topic: string,
+    txid: string,
     queueName: string,
     error: string,
     kind: TopicType,
-    timeoutMs: number = 5000,
+    timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
-    const messageID = uuidv4();
+    const messageId = uuidv4();
     const subscribe = this.constructSubscribe(
       topic,
-      messageID,
+      txid,
+      messageId,
       queueName,
       error,
       kind.valueOf(),
     );
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pending.delete("xyz");
-        reject(new Error("WebSocket response timeout"));
+        this.pending.delete(txid);
+        reject(
+          new Error(
+            `waiting subscribe response timeout, topic: ${topic}, txid: ${txid}`,
+          ),
+        );
       }, timeoutMs);
 
       try {
-        this.pending.set("xyz", { resolve, reject, timeout });
+        this.pending.set(txid, { resolve, reject, timeout });
         const cmdStr = uint8ToBase64(subscribe);
         this.ws.sendBinaryBase64(cmdStr);
       } catch (e) {
@@ -296,14 +291,17 @@ class WebsocketService {
 
   public sendUnsubscribe(
     topic: string,
+    txid: string,
     queueName: string,
     error: string,
     kind: TopicType,
-    timeoutMs: number = 5000,
+    timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
     const messageID = uuidv4();
+    const newTxid = uuidv4();
     const unsubscribe = this.constructUnsubscribe(
       topic,
+      newTxid,
       messageID,
       queueName,
       error,
@@ -311,12 +309,16 @@ class WebsocketService {
     );
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pending.delete("xyz");
-        reject(new Error("WebSocket response timeout"));
+        this.pending.delete(newTxid);
+        reject(
+          new Error(
+            `waiting unsubscribe response timeout, topic: ${topic}, txid: ${newTxid}`,
+          ),
+        );
       }, timeoutMs);
 
       try {
-        this.pending.set("xyz", { resolve, reject, timeout });
+        this.pending.set(newTxid, { resolve, reject, timeout });
         const cmdStr = uint8ToBase64(unsubscribe);
         this.ws.sendBinaryBase64(cmdStr);
       } catch (e) {
@@ -327,15 +329,17 @@ class WebsocketService {
 
   public sendCommand(
     deviceID: string,
+    txid: string,
     cmdType: CommandType,
     payload: string,
-    timeoutMs: number = 5000,
+    timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
     const messageID = uuidv4();
     const cmdTopic = `platform.${deviceID}.command`;
-    const responseTopic = `platform.ephemeral.${deviceID}-${this.txid}`;
+    const responseTopic = `platform.ephemeral.${deviceID}-${txid}`;
     const command = this.constructCommand(
       cmdTopic,
+      txid,
       messageID,
       cmdType.valueOf(),
       payload,
@@ -346,12 +350,16 @@ class WebsocketService {
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pending.delete("xyz");
-        reject(new Error("WebSocket response timeout"));
+        this.pending.delete(txid);
+        reject(
+          new Error(
+            `waiting commmand response timeout, topic: ${cmdTopic}, txid: ${txid}`,
+          ),
+        );
       }, timeoutMs);
 
       try {
-        this.pending.set("xyz", { resolve, reject, timeout });
+        this.pending.set(txid, { resolve, reject, timeout });
         const cmdStr = uint8ToBase64(command);
         this.ws.sendBinaryBase64(cmdStr);
       } catch (e) {
@@ -360,48 +368,55 @@ class WebsocketService {
     });
   }
 
-  public waitForResponse(timeoutMs: number = 5000): Promise<Uint8Array> {
+  public waitCommandResponse(
+    txid: string,
+    timeoutMs: number = 10000,
+  ): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pending.delete("xyz");
+        this.pending.delete(txid);
         reject(new Error("WebSocket response timeout"));
       }, timeoutMs);
 
       try {
-        this.pending.set("xyz", { resolve, reject, timeout });
+        this.pending.set(txid, { resolve, reject, timeout });
       } catch (e) {
         console.log(`send command exception in promise:`, e);
       }
     });
   }
 
-  public getTxid(): string {
-    return this.txid;
-  }
-
   public async executeCommand(devID: string, payload: string): Promise<string> {
-    const respTopic = `platform.ephemeral.${devID}-${this.txid}`;
+    const txid = uuidv4();
+    const respTopic = `platform.ephemeral.${devID}-${txid}`;
+    const queueName = `platform.${devID}`;
     const subResp = await this.sendSubscribe(
       respTopic,
-      respTopic,
+      txid,
+      queueName,
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
     console.log(`subResp: ${subResp.length}`);
     const cmdResp = await this.sendCommand(
       devID,
+      txid,
       CommandType.HardwareOperation,
       payload,
     );
-    console.log(`cmdResp: ${cmdResp.length}`);
-    const waitResp = await this.waitForResponse();
-    console.log(`waitResp: ${waitResp.length}`);
-
-    const bb = new flatbuffers.ByteBuffer(waitResp);
-    const envelope = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(bb);
+    const cmdBb = new flatbuffers.ByteBuffer(cmdResp);
+    const cmdEnvelop = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(cmdBb);
+    const txidBytes = cmdEnvelop.txidArray();
+    const respTxid = txidBytes
+      ? new TextDecoder("utf-8").decode(txidBytes)
+      : "";
+    const waitResp = await this.waitCommandResponse(txid);
+    const respBb = new flatbuffers.ByteBuffer(waitResp);
+    const respEnvelop =
+      FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(respBb);
     let operationResponse = "";
-    if (envelope.messageType() == Message.FlatbuffersCommand) {
-      const cmd: FlatbuffersCommand = envelope.message(
+    if (respEnvelop.messageType() == Message.FlatbuffersCommand) {
+      const cmd: FlatbuffersCommand = respEnvelop.message(
         new FlatbuffersCommand(),
       );
       const payloadBytes = cmd.payloadArray();
@@ -412,7 +427,8 @@ class WebsocketService {
 
     await this.sendUnsubscribe(
       respTopic,
-      respTopic,
+      txid,
+      queueName,
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
@@ -431,18 +447,30 @@ class WebsocketService {
   }
 
   public async queryStatus(devID: string): Promise<{ status: number[] }> {
-    const respTopic = `platform.ephemeral.${devID}-${this.txid}`;
+    const txid = uuidv4();
+    const queueName = `platform.${devID}`;
+    const respTopic = `platform.ephemeral.${devID}-${txid}`;
     const subResp = await this.sendSubscribe(
       respTopic,
-      respTopic,
+      txid,
+      queueName,
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
     console.log(`subResp: ${subResp.length}`);
-    const cmdResp = await this.sendCommand(devID, CommandType.StatusQuery, "");
-    console.log(`cmdResp: ${cmdResp.length}`);
-    const waitResp = await this.waitForResponse();
-    console.log(`waitResp: ${waitResp.length}`);
+    const cmdResp = await this.sendCommand(
+      devID,
+      txid,
+      CommandType.StatusQuery,
+      "",
+    );
+    const cmdBb = new flatbuffers.ByteBuffer(cmdResp);
+    const cmdEnvelop = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(cmdBb);
+    const txidBytes = cmdEnvelop.txidArray();
+    const respTxid = txidBytes
+      ? new TextDecoder("utf-8").decode(txidBytes)
+      : "";
+    const waitResp = await this.waitCommandResponse(txid);
 
     const bb = new flatbuffers.ByteBuffer(waitResp);
     const envelope = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(bb);
@@ -459,7 +487,8 @@ class WebsocketService {
 
     await this.sendUnsubscribe(
       respTopic,
-      respTopic,
+      txid,
+      queueName,
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
@@ -486,17 +515,30 @@ class WebsocketService {
     tmzoneoffset: number;
     rssi: number;
   }> {
-    const respTopic = `platform.ephemeral.${devID}-${this.txid}`;
+    const txid = uuidv4();
+    const queueName = `platform.${devID}`;
+    const respTopic = `platform.ephemeral.${devID}-${txid}`;
     const subResp = await this.sendSubscribe(
       respTopic,
-      respTopic,
+      txid,
+      queueName,
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
     console.log(`subResp: ${subResp.length}`);
-    const cmdResp = await this.sendCommand(devID, CommandType.ConfigQuery, "");
-    console.log(`cmdResp: ${cmdResp.length}`);
-    const waitResp = await this.waitForResponse();
+    const cmdResp = await this.sendCommand(
+      devID,
+      txid,
+      CommandType.ConfigQuery,
+      "",
+    );
+    const cmdBb = new flatbuffers.ByteBuffer(cmdResp);
+    const cmdEnvelop = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(cmdBb);
+    const txidBytes = cmdEnvelop.txidArray();
+    const respTxid = txidBytes
+      ? new TextDecoder("utf-8").decode(txidBytes)
+      : "";
+    const waitResp = await this.waitCommandResponse(txid);
     console.log(`waitResp: ${waitResp.length}`);
 
     const bb = new flatbuffers.ByteBuffer(waitResp);
@@ -513,9 +555,10 @@ class WebsocketService {
       console.log(`config: ${config}`);
     }
 
-    const unsubResp = this.sendUnsubscribe(
+    const unsubResp = await this.sendUnsubscribe(
       respTopic,
-      respTopic,
+      txid,
+      queueName,
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
