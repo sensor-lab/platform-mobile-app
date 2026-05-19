@@ -2,9 +2,9 @@ import { CustomImage, Text } from "@/src/components";
 import { Images, ScreenNames } from "@/src/config";
 import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
 import {
-    ConnectStatus,
-    PlatformDetails,
-    removePlatformByID,
+  ConnectStatus,
+  PlatformDetails,
+  removePlatformByID,
 } from "@/src/redux/reducers";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -41,7 +41,9 @@ const PairedDevicesComp = ({
   };
 
   const { colorOnStatusChange, statusName } =
-    connectStatus == ConnectStatus.DeviceDown
+    connectStatus == ConnectStatus.Connecting
+      ? { colorOnStatusChange: AppTheme.fontGray, statusName: "连接中" }
+      : connectStatus == ConnectStatus.DeviceDown
       ? { colorOnStatusChange: AppTheme.fontGray, statusName: "设备离线" }
       : connectStatus == ConnectStatus.CloudServerDown
         ? { colorOnStatusChange: AppTheme.fontGray, statusName: "服务器异常" }

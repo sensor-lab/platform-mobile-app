@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export enum ConnectStatus {
+  Connecting = "connecting",
   Online = "online",
   DeviceDown = "devicedown",
   CloudServerDown = "serverdown",

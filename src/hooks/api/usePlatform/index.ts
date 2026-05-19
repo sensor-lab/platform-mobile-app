@@ -1,7 +1,7 @@
 import {
-    ConnectStatus,
-    updateConnectStatus,
-    updatePlatformStatus,
+  ConnectStatus,
+  updateConnectStatus,
+  updatePlatformStatus,
 } from "@/src/redux/reducers";
 import { WebsocketService } from "@/src/services/payload_service";
 import { useQuery } from "@tanstack/react-query";
@@ -48,24 +48,21 @@ export function useSyncPlatformStatus<T extends { status: any[] }>(
 ) {
   const dispatch = useDispatch();
 
-  // handle error → offline
+  // Keep connect status and platform status in sync from a single query lifecycle.
   useEffect(() => {
     if (query.isError) {
       dispatch(updateConnectStatus({ id, status: ConnectStatus.DeviceDown }));
       return;
     }
-    dispatch(updateConnectStatus({ id, status: ConnectStatus.Online }));
-  }, [query.isError, id, dispatch]);
 
-  // handle success → update status
-  useEffect(() => {
     if (!query.data) return;
 
+    dispatch(updateConnectStatus({ id, status: ConnectStatus.Online }));
     dispatch(
       updatePlatformStatus({
         id,
         status: query.data.status,
       }),
     );
-  }, [query.data, id, dispatch]);
+  }, [query.isError, query.data, id, dispatch]);
 }

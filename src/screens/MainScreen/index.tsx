@@ -1,17 +1,21 @@
-import { ConnectStatus, PlatformDetails } from "@/src/redux/reducers";
-import { useEffect, useState } from "react";
+import {
+  ConnectStatus,
+  PlatformDetails,
+  updateConnectStatus,
+} from "@/src/redux/reducers";
+import { useEffect, useRef, useState } from "react";
 import { Linking, Pressable, ScrollView, View } from "react-native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Images, ScreenNames } from "../../config";
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
 import {
-    CustomImage,
-    MainContainer,
-    MainHeader,
-    PrimaryButton,
-    SectionContainer,
-    Text,
+  CustomImage,
+  MainContainer,
+  MainHeader,
+  PrimaryButton,
+  SectionContainer,
+  Text,
 } from "./../../components";
 import { MainScreenOptionsCard, PairedDevicesComp } from "./components";
 import { opetionsData } from "./extra/data";
@@ -19,9 +23,25 @@ import { styles } from "./styles";
 
 function MainScreen({ navigation }) {
   const { AppTheme } = useTheme();
+  const dispatch = useDispatch();
   const { platformDetailsByID } = useSelector((state: any) => state.platform);
   const [setup, setSetup] = useState<PlatformDetails[]>([]);
   const [showRemoveButton, setShowRemoveButton] = useState(null);
+  const hasInitializedConnectStatus = useRef(false);
+
+  useEffect(() => {
+    if (hasInitializedConnectStatus.current) return;
+
+    const platformIds = Object.keys(platformDetailsByID || {});
+    if (!platformIds.length) return;
+
+    platformIds.forEach((id) => {
+      dispatch(updateConnectStatus({ id, status: ConnectStatus.Connecting }));
+    });
+
+    hasInitializedConnectStatus.current = true;
+  }, [dispatch, platformDetailsByID]);
+
   useEffect(() => {
     const sortedPlatforms: PlatformDetails[] = [
       ...(Object.values(platformDetailsByID) as PlatformDetails[]),

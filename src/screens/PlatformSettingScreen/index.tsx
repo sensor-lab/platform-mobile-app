@@ -1,14 +1,14 @@
 import {
-    CustomDropdown,
-    CustomImage,
-    CustomModal,
-    CustomTouchable,
-    Loader,
-    MainContainer,
-    MainHeader,
-    PrimaryButton,
-    SectionContainer,
-    Text,
+  CustomDropdown,
+  CustomImage,
+  CustomModal,
+  CustomTouchable,
+  Loader,
+  MainContainer,
+  MainHeader,
+  PrimaryButton,
+  SectionContainer,
+  Text,
 } from "@/src/components";
 import { Images, ScreenNames } from "@/src/config";
 import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
@@ -66,23 +66,6 @@ const PlatformSettingScreen = ({ navigation, route }) => {
     data: queryPlatform.data,
     isError: queryPlatform.isError,
   });
-
-  // const { refetch, isFetching, isLoading } = usePrinter(
-  //   IP_Address,
-  //   ["Status"],
-  //   false,
-  // );
-  // const {
-  //   HostName,
-  //   Status,
-  //   statusCategory,
-  //   LanguageV,
-  //   SpeedV,
-  //   TOFAdj,
-  //   Darkness,
-  //   PrintWidth,
-  //   ShiftLeft,
-  // } = printerDetails;
 
   const { AppTheme } = useTheme();
 

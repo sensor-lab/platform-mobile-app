@@ -6,11 +6,11 @@ import "react-native-get-random-values";
 import WebSocketWithSelfSignedCert from "react-native-websocket-self-signed";
 import { v4 as uuidv4 } from "uuid";
 import {
-    FlatbuffersCommand,
-    FlatbuffersEnvelope,
-    FlatbuffersSubscribe,
-    FlatbuffersUnsubscribe,
-    Message,
+  FlatbuffersCommand,
+  FlatbuffersEnvelope,
+  FlatbuffersSubscribe,
+  FlatbuffersUnsubscribe,
+  Message,
 } from "./flatbuffersmsg";
 
 enum CommandType {
@@ -397,7 +397,6 @@ class WebsocketService {
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
-    console.log(`subResp: ${subResp.length}`);
     const cmdResp = await this.sendCommand(
       devID,
       txid,
@@ -457,7 +456,6 @@ class WebsocketService {
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
-    console.log(`subResp: ${subResp.length}`);
     const cmdResp = await this.sendCommand(
       devID,
       txid,
@@ -525,7 +523,6 @@ class WebsocketService {
       "",
       TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
     );
-    console.log(`subResp: ${subResp.length}`);
     const cmdResp = await this.sendCommand(
       devID,
       txid,
