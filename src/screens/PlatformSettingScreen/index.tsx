@@ -65,6 +65,7 @@ const PlatformSettingScreen = ({ navigation, route }) => {
   useSyncPlatformStatus(id, {
     data: queryPlatform.data,
     isError: queryPlatform.isError,
+    error: queryPlatform.error,
   });
 
   const { AppTheme } = useTheme();

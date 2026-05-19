@@ -34,6 +34,7 @@ const PairedDevicesComp = ({
   useSyncPlatformStatus(id, {
     data: queryPlatform.data,
     isError: queryPlatform.isError,
+    error: queryPlatform.error,
   });
 
   const handleRemovePlatform = () => {

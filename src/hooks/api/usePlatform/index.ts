@@ -15,6 +15,7 @@ type PlatformStatus = {
 type PlatformQueryResult<T> = {
   data?: T;
   isError: boolean;
+  error?: unknown;
 };
 
 export const usePlatform = (
@@ -51,6 +52,7 @@ export function useSyncPlatformStatus<T extends { status: any[] }>(
   // Keep connect status and platform status in sync from a single query lifecycle.
   useEffect(() => {
     if (query.isError) {
+      console.error("useSyncPlatformStatus error:", { id, error: query.error });
       dispatch(updateConnectStatus({ id, status: ConnectStatus.DeviceDown }));
       return;
     }
@@ -64,5 +66,5 @@ export function useSyncPlatformStatus<T extends { status: any[] }>(
         status: query.data.status,
       }),
     );
-  }, [query.isError, query.data, id, dispatch]);
+  }, [query.isError, query.error, query.data, id, dispatch]);
 }
