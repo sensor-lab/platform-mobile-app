@@ -28,14 +28,10 @@ export const usePlatform = (
     queryFn: async () => {
       if (!id) throw new Error("Invalid ID to query cloud");
 
-      const ws = new WebsocketService();
-      try {
-        await ws.connect();
-        const status = await ws.queryStatus(id);
-        return status;
-      } finally {
-        ws.close();
-      }
+      const ws = WebsocketService.getInstance();
+      const str = await ws.connect();
+      console.log(`websocket connect result: ${str}`)
+      return ws.queryStatus(id);
     },
     enabled: !!id,
     refetchInterval: interval,

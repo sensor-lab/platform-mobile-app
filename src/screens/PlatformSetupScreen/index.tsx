@@ -6,12 +6,12 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import {
-    CustomTextInput,
-    InfoFieldComp,
-    Loader,
-    MainContainer,
-    MainHeader,
-    PrimaryButton,
+  CustomTextInput,
+  InfoFieldComp,
+  Loader,
+  MainContainer,
+  MainHeader,
+  PrimaryButton,
 } from "../../components";
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
@@ -30,24 +30,21 @@ const PlatformSetupScreen = ({ navigation, route }) => {
   const handleTestConnection = async () => {
     console.log(`Test connection for ${platformID}`);
     const payload = '{"event":"now","actions":[["gpio", "led", "output", 2]]}';
-    const ws = new WebsocketService();
+    const ws = WebsocketService.getInstance();
     setLoading("连接测试中");
     try {
-      await ws.connect();
       await ws.executeCommand(platformID, payload);
       toast.success("成功翻转绿色创意盒LED灯");
     } catch (err) {
       toast.fail("失败", "测试连接失败");
     }
     setLoading(null);
-    ws.close();
   };
 
   const handleAddDevice = async () => {
-    const ws = new WebsocketService();
+    const ws = WebsocketService.getInstance();
     setLoading("连接并添加平台中");
     try {
-      await ws.connect();
       const status = await ws.queryStatus(platformID);
       const config = await ws.queryConfig(platformID);
       const statusConfig = {
@@ -78,7 +75,6 @@ const PlatformSetupScreen = ({ navigation, route }) => {
       toast.fail("失败,请重试");
     } finally {
       setLoading(null);
-      ws.close();
     }
   };
 

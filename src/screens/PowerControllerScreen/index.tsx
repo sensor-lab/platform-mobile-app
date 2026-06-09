@@ -1,23 +1,23 @@
 import {
-    CustomDropdown,
-    MainContainer,
-    MainHeader,
-    SectionContainer,
-    Text,
+  CustomDropdown,
+  MainContainer,
+  MainHeader,
+  SectionContainer,
+  Text,
 } from "@/src/components";
 import { useTheme } from "@/src/hooks";
 import { WebsocketService } from "@/src/services/payload_service";
 import { toast } from "@/src/utils/toast.utils";
 import {
-    constructNowEvent,
-    gpioHardwareOperation,
+  constructNowEvent,
+  gpioHardwareOperation,
 } from '@sensorsparks/platform-api';
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SD } from "../../utils";
 import { styles } from "./styles";
@@ -34,14 +34,9 @@ const fetchGpioStatus = async (id: string, pin: string): Promise<boolean> => {
   const opers: any[] = [];
   gpioHardwareOperation(opers, Number(pin), "input", 0); // does not have pullup resistor
   const event = constructNowEvent(opers);
-  const ws = new WebsocketService();
-  try {
-    await ws.connect();
-    const resp = await ws.executeCommand(id, JSON.stringify(event));
-    return JSON.parse(resp)["result"][0][0] === 1;
-  } finally {
-    ws.close();
-  }
+  const ws = WebsocketService.getInstance();
+  const resp = await ws.executeCommand(id, JSON.stringify(event));
+  return JSON.parse(resp)["result"][0][0] === 1;
 };
 
 // Set GPIO output level via WebSocket hardware operation
@@ -49,14 +44,9 @@ const setGpioOutput = async (id: string, pin: string, high: boolean): Promise<bo
   const opers: any[] = [];
   gpioHardwareOperation(opers, Number(pin), "output", high ? 1 : 0);
   const event = constructNowEvent(opers);
-  const ws = new WebsocketService();
-  try {
-    await ws.connect();
-    await ws.executeCommand(id, JSON.stringify(event));
-    return high;
-  } finally {
-    ws.close();
-  }
+  const ws = WebsocketService.getInstance();
+  await ws.executeCommand(id, JSON.stringify(event));
+  return high;
 };
 
 // ─── Large animated toggle ────────────────────────────────────────────────────
@@ -89,12 +79,12 @@ const LargeToggle = ({
   const thumbLeft =
     trackWidth > 0
       ? animValue.interpolate({
-          inputRange: [0, 1],
-          outputRange: [
-            THUMB_MARGIN,
-            trackWidth - THUMB_SIZE - THUMB_MARGIN,
-          ],
-        })
+        inputRange: [0, 1],
+        outputRange: [
+          THUMB_MARGIN,
+          trackWidth - THUMB_SIZE - THUMB_MARGIN,
+        ],
+      })
       : THUMB_MARGIN;
 
   return (

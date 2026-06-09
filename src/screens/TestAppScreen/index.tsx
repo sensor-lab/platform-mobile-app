@@ -3,20 +3,20 @@ import { SD, toggleOnboardLED } from "@/src/utils";
 import { toast } from "@/src/utils/toast.utils";
 import { useState } from "react";
 import {
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    View,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  View,
 } from "react-native";
 import {
-    CustomDropdown,
-    CustomTextInput,
-    InfoFieldComp,
-    Loader,
-    MainContainer,
-    MainHeader,
-    PrimaryButton,
+  CustomDropdown,
+  CustomTextInput,
+  InfoFieldComp,
+  Loader,
+  MainContainer,
+  MainHeader,
+  PrimaryButton,
 } from "../../components";
 import { useTheme } from "../../hooks";
 import { styles } from "./styles";
@@ -55,10 +55,9 @@ const TestAppScreen = ({ route }) => {
 
   const handleExecution = async () => {
     const payload = '{"event":"now","actions":[["gpio", "led", "output", 2]]}';
-    const ws = new WebsocketService();
+    const ws = WebsocketService.getInstance();
     setLoading("硬件操作发送中");
     try {
-      await ws.connect();
       const resp = await ws.executeCommand(id, payload);
       setResponse(resp);
       toast.success("发送成功");
@@ -66,7 +65,6 @@ const TestAppScreen = ({ route }) => {
       toast.fail("失败", "发送硬件操作失败");
     }
     setLoading(null);
-    ws.close();
   };
   const handlePredefined = () => {
     setHardwareOperation(toggleOnboardLED);
@@ -101,7 +99,7 @@ const TestAppScreen = ({ route }) => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             style={{ flex: 1 }}
-            // contentContainerStyle={{ flex: 1 }}
+          // contentContainerStyle={{ flex: 1 }}
           >
             <View
               style={{

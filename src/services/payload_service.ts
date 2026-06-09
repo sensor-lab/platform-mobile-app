@@ -17,6 +17,7 @@ enum CommandType {
   HardwareOperation = 900,
   StatusQuery = 910,
   ConfigQuery = 920,
+  FirmwareImage = 930,
 }
 
 enum TopicType {
@@ -45,23 +46,49 @@ function base64ToUint8(str: string): Uint8Array {
 }
 
 class WebsocketService {
+  private static instance: WebsocketService | null = null;
+
+  public static getInstance(): WebsocketService {
+    if (!WebsocketService.instance) {
+      WebsocketService.instance = new WebsocketService();
+    }
+    return WebsocketService.instance;
+  }
+
   private deviceType = "";
   private url: string = "wss://iot.sensorsparks.com:8080/testapi";
   private ws: WebSocketWithSelfSignedCert;
-  private pending = new Map<string, PendingRequest>();
-
-  constructor() {
+  private pending = new Map<string, PendingRequest>();  private connected = false;
+  private connectResolve: ((str: string) => void) | null = null;
+  private connectReject: ((err: Error) => void) | null = null;
+  private constructor() {
     this.ws = WebSocketWithSelfSignedCert.getInstance(this.url);
     this.ws.onBinaryMessage(this.handleBinaryMessage);
     this.ws.onClose(() => {
       console.log("websocket closed!");
+      this.connected = false;
     });
     this.ws.onOpen(() => {
       console.log("websocket opened!");
+      this.connected = true;
+      if (this.connectResolve) {
+        this.connectResolve("connected");
+        this.resetConnectPromise();
+      }
     });
-    this.ws.onError(() => {
-      console.log("websocket error!");
+    this.ws.onError((err) => {
+      console.log(`websocket error!: ${err}`);
+      this.connected = false;
+      if (this.connectReject) {
+        this.connectReject(new Error(`WebSocket error: ${err}`));
+        this.resetConnectPromise();
+      }
     });
+  }
+
+  private resetConnectPromise(): void {
+    this.connectResolve = null;
+    this.connectReject = null;
   }
 
   private handleBinaryMessage = (data: string): void => {
@@ -226,8 +253,12 @@ class WebsocketService {
     return builder.asUint8Array();
   }
 
-  public async connect(): Promise<string> {
-    return this.ws.connect({
+  public connect(): Promise<string> {
+    if (this.connected) return Promise.resolve("already connected");
+    return new Promise((resolve, reject) => {
+      this.connectResolve = resolve;
+      this.connectReject = reject;
+      this.ws.connect({
       "X-Ssl-Client-Cert":
         "MIIC5DCCAcwCFC1/sML6wbqRK9IQamql9wGzzky7MA0GCSqGSIb3DQEBCwUAMC4x" +
         "FTATBgNVBAoMDFNlbnNvcnNwYXJrczEVMBMGA1UEAwwMU2Vuc29yU3BhcmtzMB4X" +
@@ -245,6 +276,7 @@ class WebsocketService {
         "/aioA/DXhWECfFijrW3phtzVpjwkfyYG+u5MgVM2srY9wJzdt0ckor2YPjnhp5zV" +
         "zCmQrFD+/zLhs+4ns4ehc6RVX2E2EbSjZA27stkJl13JariwqxDfU6n/DbEveZoN" +
         "JdMTxglzFcMZ/gOY99TZHlbSW9RYvXOP",
+      });
     });
   }
 
@@ -260,6 +292,7 @@ class WebsocketService {
     kind: TopicType,
     timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
+    if (!this.connected) return Promise.reject(new Error("not connected"));
     const messageId = uuidv4();
     const subscribe = this.constructSubscribe(
       topic,
@@ -297,6 +330,7 @@ class WebsocketService {
     kind: TopicType,
     timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
+    if (!this.connected) return Promise.reject(new Error("not connected"));
     const messageID = uuidv4();
     const newTxid = uuidv4();
     const unsubscribe = this.constructUnsubscribe(
@@ -334,9 +368,11 @@ class WebsocketService {
     payload: string,
     timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
+    if (!this.connected) return Promise.reject(new Error("not connected"));
     const messageID = uuidv4();
     const cmdTopic = `platform.${deviceID}.command`;
     const responseTopic = `platform.ephemeral.${deviceID}-${txid}`;
+
     const command = this.constructCommand(
       cmdTopic,
       txid,
@@ -346,6 +382,44 @@ class WebsocketService {
       this.deviceType,
       deviceID,
       responseTopic,
+    );
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.pending.delete(txid);
+        reject(
+          new Error(
+            `waiting commmand response timeout, topic: ${cmdTopic}, txid: ${txid}`,
+          ),
+        );
+      }, timeoutMs);
+
+      try {
+        this.pending.set(txid, { resolve, reject, timeout });
+        const cmdStr = uint8ToBase64(command);
+        this.ws.sendBinaryBase64(cmdStr);
+      } catch (e) {
+        console.log(`send command exception in promise:`, e);
+      }
+    });
+  }
+
+  public sendFwRequest(
+    txid: string,
+    timeoutMs: number = 10000
+  ):Promise<Uint8Array> {
+    if (!this.connected) return Promise.reject(new Error("not connected"));
+    const messageID = uuidv4();
+    const cmdTopic = `firmware.query.latest`;
+    const command = this.constructCommand(
+      cmdTopic,
+      txid,
+      messageID,
+      CommandType.FirmwareImage.valueOf(),
+      "",
+      this.deviceType,
+      "",
+      "",
     );
 
     return new Promise((resolve, reject) => {
@@ -569,6 +643,35 @@ class WebsocketService {
         }
       } else {
         reject(new Error(`does not receive valid config`));
+      }
+    });
+  }
+
+  public async queryLatestFw(devID: string): Promise<{
+    version: string;
+    size: number;
+    filename: string;
+  }> {
+    const cmdResp = await this.sendFwRequest(uuidv4());
+
+    const bb = new flatbuffers.ByteBuffer(cmdResp);
+    const envelope = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(bb);
+    let fw = "";
+    if (envelope.messageType() == Message.FlatbuffersCommand) {
+      const cmd: FlatbuffersCommand = envelope.message(new FlatbuffersCommand());
+      const payloadBytes = cmd.payloadArray();
+      fw = payloadBytes ? new TextDecoder("utf-8").decode(payloadBytes) : "";
+    }
+
+    return new Promise((resolve, reject) => {
+      if (fw.length > 0) {
+        try {
+          resolve(JSON.parse(fw));
+        } catch (e) {
+          reject(new Error(`failed to parse json from ${fw}`));
+        }
+      } else {
+        reject(new Error(`does not receive valid firmware info`));
       }
     });
   }

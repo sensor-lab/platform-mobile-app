@@ -3,6 +3,7 @@ import {
   PlatformDetails,
   updateConnectStatus,
 } from "@/src/redux/reducers";
+import { WebsocketService } from "@/src/services/payload_service";
 import { useEffect, useRef, useState } from "react";
 import { Linking, Pressable, ScrollView, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -59,6 +60,12 @@ function MainScreen({ navigation }) {
 
       return a.mdnsName.localeCompare(b.mdnsName);
     });
+    if (sortedPlatforms.length == 0) {
+      const connect = async () => {
+        await WebsocketService.getInstance().connect();
+      };
+      connect();
+    }
     setSetup(sortedPlatforms);
   }, [platformDetailsByID]);
 

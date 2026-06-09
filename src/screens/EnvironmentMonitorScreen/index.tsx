@@ -1,18 +1,18 @@
 import {
-    CustomDropdown,
-    MainContainer,
-    MainHeader,
-    PrimaryButton,
-    SectionContainer,
-    Text,
+  CustomDropdown,
+  MainContainer,
+  MainHeader,
+  PrimaryButton,
+  SectionContainer,
+  Text,
 } from "@/src/components";
 import { useTheme } from "@/src/hooks";
 import { WebsocketService } from "@/src/services/payload_service";
 import { toast } from "@/src/utils/toast.utils";
 import {
-    constructNowEvent,
-    i2cReadHardwareOperation,
-    i2cWriteHardwareOperation,
+  constructNowEvent,
+  i2cReadHardwareOperation,
+  i2cWriteHardwareOperation,
 } from '@sensorsparks/platform-api';
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
@@ -37,14 +37,9 @@ const MTS01_I2C_ADDR = 69;
 const AGS02MA_I2C_ADDR = 26;
 
 async function executeI2COperation(deviceId: string, event: any): Promise<any> {
-  const ws = new WebsocketService();
-  try {
-    await ws.connect();
-    const resp = await ws.executeCommand(deviceId, JSON.stringify(event));
-    return JSON.parse(resp);
-  } finally {
-    ws.close();
-  }
+  const ws = WebsocketService.getInstance();
+  const resp = await ws.executeCommand(deviceId, JSON.stringify(event));
+  return JSON.parse(resp);
 }
 
 async function startSht30SingleShot(deviceId: string, sda_pin: number, scl_pin: number): Promise<void> {
@@ -205,8 +200,8 @@ const EnvironmentMonitorScreen = ({ navigation, route }) => {
       </SectionContainer>
 
       <SectionContainer
-        containerStyles={{ 
-          marginTop: SD.hp(20), 
+        containerStyles={{
+          marginTop: SD.hp(20),
           paddingBottom: SD.hp(20),
           paddingHorizontal: SD.wp(15)
         }}
@@ -215,10 +210,10 @@ const EnvironmentMonitorScreen = ({ navigation, route }) => {
           <View style={styles.headerContainer}>
             <View style={styles.statusContainer}>
               <Text bold size={16} color={AppTheme.Black}>
-                监测状态: 
+                监测状态:
               </Text>
               <View style={[
-                styles.statusIndicator, 
+                styles.statusIndicator,
                 { backgroundColor: isMonitoring ? AppTheme.lightGreen : AppTheme.fontGray }
               ]}>
                 <Text bold size={14} color={AppTheme.White}>
@@ -233,7 +228,7 @@ const EnvironmentMonitorScreen = ({ navigation, route }) => {
               {renderEnvironmentCard("温度", environmentData.temperature.toFixed(1), "°C")}
               {renderEnvironmentCard("湿度", environmentData.humidity.toFixed(0), "%")}
             </View>
-            
+
             <View style={styles.dataRow}>
               {renderEnvironmentCard("空气质量", environmentData.airQuality.toFixed(0), "ppb", airQualityStatus)}
             </View>

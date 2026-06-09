@@ -1,17 +1,17 @@
 import {
-    MainContainer,
-    MainHeader,
-    PrimaryButton,
-    Text,
+  MainContainer,
+  MainHeader,
+  PrimaryButton,
+  Text,
 } from "@/src/components";
 import { WebsocketService } from "@/src/services/payload_service";
 import { toast } from "@/src/utils/toast.utils";
 import {
-    constructNowEvent,
-    dvpCaptureHardwareOperation,
-    dvpReadHardwareOperation,
-    dvpResetHardwareOperation,
-    dvpSetHardwareOperation,
+  constructNowEvent,
+  dvpCaptureHardwareOperation,
+  dvpReadHardwareOperation,
+  dvpResetHardwareOperation,
+  dvpSetHardwareOperation,
 } from '@sensorsparks/platform-api';
 import { Buffer } from 'buffer';
 import { useState } from "react";
@@ -19,26 +19,21 @@ import { ActivityIndicator, Image, View } from "react-native";
 import { styles } from "./styles";
 
 // Fixed camera pin configuration
-const CAM_SDA_PIN    = 0;
-const CAM_SCL_PIN    = 1;
-const CAM_XCLK_PIN   = 5;
-const CAM_PCLK_PIN   = 4;
-const CAM_VSYNC_PIN  = 2;
-const CAM_HREF_PIN   = 3;
-const CAM_RESET_PIN  = -1;
-const CAM_DATA0_PIN  = 12;
-const CAM_FORMAT     = 'jpeg' as const;
-const CAM_PIC_SIZE   = '640x480' as const;
+const CAM_SDA_PIN = 0;
+const CAM_SCL_PIN = 1;
+const CAM_XCLK_PIN = 5;
+const CAM_PCLK_PIN = 4;
+const CAM_VSYNC_PIN = 2;
+const CAM_HREF_PIN = 3;
+const CAM_RESET_PIN = -1;
+const CAM_DATA0_PIN = 12;
+const CAM_FORMAT = 'jpeg' as const;
+const CAM_PIC_SIZE = '640x480' as const;
 
 async function executeCameraCommand(deviceId: string, event: any): Promise<any> {
-  const ws = new WebsocketService();
-  try {
-    await ws.connect();
-    const resp = await ws.executeCommand(deviceId, JSON.stringify(event));
-    return JSON.parse(resp);
-  } finally {
-    ws.close();
-  }
+  const ws = WebsocketService.getInstance();
+  const resp = await ws.executeCommand(deviceId, JSON.stringify(event));
+  return JSON.parse(resp);
 }
 
 async function captureFrame(deviceId: string): Promise<string | null> {
@@ -92,16 +87,16 @@ const RemoteCameraScreen = ({ navigation, route }) => {
   // and height = canvasWidth (becomes the visual height), then let the rotation fill it.
   const imageStyle = canvasSize.width > 0 && isSideways
     ? {
-        width: canvasSize.height,
-        height: canvasSize.width,
-        transform: [{ rotate: `${rotateDeg}deg` }],
-      }
+      width: canvasSize.height,
+      height: canvasSize.width,
+      transform: [{ rotate: `${rotateDeg}deg` }],
+    }
     : {
-        width: '100%' as const,
-        height: '100%' as const,
-        borderRadius: 12,
-        transform: [{ rotate: `${rotateDeg}deg` }],
-      };
+      width: '100%' as const,
+      height: '100%' as const,
+      borderRadius: 12,
+      transform: [{ rotate: `${rotateDeg}deg` }],
+    };
 
   const handleRotate = () => setRotateDeg(prev => (prev + 90) % 360);
 

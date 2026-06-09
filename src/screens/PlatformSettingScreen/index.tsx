@@ -13,16 +13,18 @@ import {
 import { Images, ScreenNames } from "@/src/config";
 import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
 import { ConnectStatus } from "@/src/redux/reducers";
+import { WebsocketService } from "@/src/services/payload_service";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
 import { RootState } from "../../redux";
 import { SD } from "../../utils";
 import { PrinterSettingScreenCard } from "./components";
 import { cardsDummyData } from "./extra";
 import { styles } from "./styles";
 
-    
+
 const appCategory = [
   { label: "发光类", value: "lightCategory" },
   { label: "传感器类", value: "sensorCategory" },
@@ -31,18 +33,18 @@ const appCategory = [
 ];
 
 const apps: Record<string, { label: string; value: string; icon: number }[]> = {
-    "lightCategory": [{
-        label: "灯带控制器", value: "ledStripController", icon: Images.ledStripApp
-    }],
-    "sensorCategory": [{
-        label: "环境监测应用", value: "environmentMonitor", icon: Images.environmentApp
-    }],
-    "imageSoundCategory": [{
-        label: "远程照相机", value: "remoteCamera", icon: Images.remoteCameraApp
-    }],
-    "powerCategory": [{
-        label: "电源控制器", value: "powerController", icon: Images.powerControllerApp
-    }]
+  "lightCategory": [{
+    label: "灯带控制器", value: "ledStripController", icon: Images.ledStripApp
+  }],
+  "sensorCategory": [{
+    label: "环境监测应用", value: "environmentMonitor", icon: Images.environmentApp
+  }],
+  "imageSoundCategory": [{
+    label: "远程照相机", value: "remoteCamera", icon: Images.remoteCameraApp
+  }],
+  "powerCategory": [{
+    label: "电源控制器", value: "powerController", icon: Images.powerControllerApp
+  }]
 }
 
 const PlatformSettingScreen = ({ navigation, route }) => {
@@ -53,6 +55,17 @@ const PlatformSettingScreen = ({ navigation, route }) => {
   const platformDetail = useSelector(
     (state: RootState) => state.platform.platformDetailsByID[id],
   );
+
+  useEffect(() => {
+    const fetchFw = async () => {
+      const ws = WebsocketService.getInstance();
+      const txid = uuidv4();
+      console.log(`jay 1`)
+      const resp = await ws.sendFwRequest(txid);
+      console.log(`jay is testing!: ${JSON.stringify(resp)}`);
+    };
+    fetchFw();
+  }, [])
 
   useEffect(() => {
     // in case it accidentally navigate here right after printer card removed. go back to home screne.
@@ -234,7 +247,7 @@ const PlatformSettingScreen = ({ navigation, route }) => {
         <Pressable
           style={{ marginVertical: SD.hp(15) }}
           onPress={
-            () => {}
+            () => { }
             // navigation.navigate(ScreenNames.PlatformInfoScreen, { id })
           }
         >
@@ -280,7 +293,7 @@ const PlatformSettingScreen = ({ navigation, route }) => {
                 alignItems: "center",
               },
             ]}
-            // onPress={handleRefresh}
+          // onPress={handleRefresh}
           >
             <CustomImage source={Images.refresh} style={styles.refreshIcon} />
             <Text bold size={17} color={AppTheme.Primary}>
@@ -298,12 +311,12 @@ const PlatformSettingScreen = ({ navigation, route }) => {
             onPress={() => handleClick(item)}
           />
         ))}
-        
+
         {/* Render added apps */}
         {addedApps.map((appValue, index) => {
           const appDetails = getAppDetails(appValue);
           if (!appDetails) return null;
-          
+
           return (
             <PrinterSettingScreenCard
               key={`app-${index}`}
@@ -391,7 +404,7 @@ const AddAppsModal = ({ isVisible, onClose, onAddNewApp, status }) => {
             }}
             place
             activeColor={AppTheme.White}
-            // fontFamily={Fonts["Bold"]}
+          // fontFamily={Fonts["Bold"]}
           />
 
           {selectedCategory && (
@@ -419,7 +432,7 @@ const AddAppsModal = ({ isVisible, onClose, onAddNewApp, status }) => {
               }}
               place
               activeColor={AppTheme.White}
-              // fontFamily={Fonts["Bold"]}
+            // fontFamily={Fonts["Bold"]}
             />
           )}
         </View>

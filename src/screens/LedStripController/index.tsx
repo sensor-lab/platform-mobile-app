@@ -1,18 +1,18 @@
 import {
-    CustomDropdown,
-    MainContainer,
-    MainHeader,
-    PrimaryButton,
-    SectionContainer,
-    Text,
+  CustomDropdown,
+  MainContainer,
+  MainHeader,
+  PrimaryButton,
+  SectionContainer,
+  Text,
 } from "@/src/components";
 import { useTheme } from "@/src/hooks";
 import { WebsocketService } from "@/src/services/payload_service";
 import { toast } from "@/src/utils/toast.utils";
 import {
-    advanceOutputSetupHardwareOperation,
-    advanceOutputStartHardwareOperation,
-    constructNowEvent,
+  advanceOutputSetupHardwareOperation,
+  advanceOutputStartHardwareOperation,
+  constructNowEvent,
 } from '@sensorsparks/platform-api';
 import { useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -23,10 +23,10 @@ const WS2812_TIMING = [1.15, 0.35, 1.3, 0.7] as const;
 
 // Color theme map — keys match theme dropdown values
 const colorMap = new Map<string, string[]>([
-  ['starBlue',      ['#00a6fb', '#0582ca', '#006494', '#003554', '#051923']],
+  ['starBlue', ['#00a6fb', '#0582ca', '#006494', '#003554', '#051923']],
   ['mountainGreen', ['#5bba6f', '#3fa34d', '#2a9134', '#137547', '#054a29']],
-  ['crimsonRed',    ['#ea8c55', '#c75146', '#ad2e24', '#81171b', '#540804']],
-  ['colorful',      ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee']],
+  ['crimsonRed', ['#ea8c55', '#c75146', '#ad2e24', '#81171b', '#540804']],
+  ['colorful', ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee']],
 ]);
 
 function makeRepeated(arr: number[], times: number): number[] {
@@ -70,26 +70,16 @@ const LedStripController = ({ navigation, route }) => {
       WS2812_TIMING[2], WS2812_TIMING[3]
     );
     const event = constructNowEvent(opers);
-    const ws = new WebsocketService();
-    try {
-      await ws.connect();
-      await ws.executeCommand(deviceId, JSON.stringify(event));
-    } finally {
-      ws.close();
-    }
+    const ws = WebsocketService.getInstance();
+    await ws.executeCommand(deviceId, JSON.stringify(event));
   };
 
   const sendStartCommand = async (pin: number, colorData: number[], ledNum: number) => {
     const opers: any[] = [];
     advanceOutputStartHardwareOperation(opers, pin, colorData);
     const event = constructNowEvent(opers, ledNum);
-    const ws = new WebsocketService();
-    try {
-      await ws.connect();
-      await ws.executeCommand(deviceId, JSON.stringify(event));
-    } finally {
-      ws.close();
-    }
+    const ws = WebsocketService.getInstance();
+    await ws.executeCommand(deviceId, JSON.stringify(event));
   };
 
   const handleSet = async () => {
