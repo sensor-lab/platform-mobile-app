@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.devcognitivetpg.sensorsparksmobileapp"
+      "bundleIdentifier": "com.sensorsparks.mobileapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.devcognitivetpg.sensorsparksmobileapp"
+      "package": "com.sensorsparks.mobileapp"
     },
     "plugins": [
       "expo-router",
