@@ -66,12 +66,12 @@ function fail(
   }
 }
 
-function info(message: string) {
+function info(message: string, visibilityTime = 2000) {
   Toast.show({
     type: "info",
     text1: message || "Info",
     position: "top",
-    visibilityTime: 2000,
+    visibilityTime,
     topOffset: 30,
     autoHide: true,
   });

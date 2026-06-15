@@ -12,6 +12,7 @@ import {
   EnvironmentMonitorScreen,
   LedStripController,
   MainScreen,
+  PlatformInfoScreen,
   PlatformSettingScreen,
   PlatformSetupScreen,
   PowerControllerScreen,
@@ -43,6 +44,10 @@ export default function App() {
                   <Stack.Screen
                     name={ScreenNames.PlatformSettingScreen}
                     component={PlatformSettingScreen}
+                  />
+                  <Stack.Screen
+                    name={ScreenNames.PlatformInfoScreen}
+                    component={PlatformInfoScreen}
                   />
                   <Stack.Screen
                     name={ScreenNames.TestAppScreen}

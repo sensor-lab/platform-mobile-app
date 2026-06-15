@@ -15,6 +15,8 @@ export type PlatformDetails = {
   voltage: number;
   platformStatus: number[];
   connectStatus: ConnectStatus;
+  tmzoneoffset: number;
+  rssi: number;
 };
 
 export type PlatformStateType = {

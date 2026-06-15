@@ -107,6 +107,33 @@ const sendMessage = (message?: string) => {
   }
 };
 
+const parseVersion = (version?: string): number[] => {
+    if (!version) return [];
+    return version
+        .replace(/^[vV]/, "")
+        .split(/[^0-9]+/)
+        .filter(Boolean)
+        .map((part) => Number(part));
+};
+
+const compareVersions = (ver1?: string, ver2?: string): number => {
+    const oneParts = parseVersion(ver1);
+    const twoParts = parseVersion(ver2);
+    const commonLength = Math.min(oneParts.length, twoParts.length);
+
+    for (let i = 0; i < commonLength; i += 1) {
+        const l = oneParts[i];
+        const r = twoParts[i];
+        if (l > r) return 1;
+        if (l < r) return -1;
+    }
+
+    if (oneParts.length > twoParts.length) return 1;
+    if (oneParts.length < twoParts.length) return -1;
+
+    return 0;
+};
+
 const debouncedFunction = _.debounce((callback) => {
   callback(); // Call your function here
 }, 700); // Adjust the debounce delay (in milliseconds) as needed
@@ -133,6 +160,7 @@ export default {
   sendMessage,
   getGreeting,
   generateFilledArray,
+  compareVersions,
   debouncedFunction,
   emailRegex,
   fullNameRegex,

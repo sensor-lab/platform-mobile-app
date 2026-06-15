@@ -14,12 +14,14 @@ import { Images, ScreenNames } from "@/src/config";
 import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
 import { ConnectStatus } from "@/src/redux/reducers";
 import { WebsocketService } from "@/src/services/payload_service";
+import CommonUtils from "@/src/utils/common.utils";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { RootState } from "../../redux";
 import { SD } from "../../utils";
+import { toast } from "../../utils/toast.utils";
 import { PrinterSettingScreenCard } from "./components";
 import { cardsDummyData } from "./extra";
 import { styles } from "./styles";
@@ -57,15 +59,24 @@ const PlatformSettingScreen = ({ navigation, route }) => {
   );
 
   useEffect(() => {
+    if (!platformDetail?.fwVersion) return;
+
     const fetchFw = async () => {
-      const ws = WebsocketService.getInstance();
-      const txid = uuidv4();
-      console.log(`jay 1`)
-      const resp = await ws.sendFwRequest(txid);
-      console.log(`jay is testing!: ${JSON.stringify(resp)}`);
+      try {
+        const ws = WebsocketService.getInstance();
+        const txid = uuidv4();
+        const resp = await ws.queryLatestFw(txid);
+
+        if (CommonUtils.compareVersions(resp?.version, platformDetail.fwVersion) > 0) {
+          toast.info(`发现新固件版本 ${resp.version}，当前版本 ${platformDetail.fwVersion}`, 8000);
+        }
+      } catch (error) {
+        console.log("Failed to query latest firmware", error);
+      }
     };
+
     fetchFw();
-  }, [])
+  }, [platformDetail?.fwVersion])
 
   useEffect(() => {
     // in case it accidentally navigate here right after printer card removed. go back to home screne.
@@ -246,10 +257,7 @@ const PlatformSettingScreen = ({ navigation, route }) => {
       >
         <Pressable
           style={{ marginVertical: SD.hp(15) }}
-          onPress={
-            () => { }
-            // navigation.navigate(ScreenNames.PlatformInfoScreen, { id })
-          }
+          onPress={() => navigation.navigate(ScreenNames.PlatformInfoScreen, { id })}
         >
           <CustomImage source={Images.platform} style={styles.deviceImage} />
           <Text

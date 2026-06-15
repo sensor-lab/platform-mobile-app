@@ -63,6 +63,8 @@ const PlatformSetupScreen = ({ navigation, route }) => {
             hardwareVersion: statusConfig.hwver,
             voltage: statusConfig.voltage,
             platformStatus: statusConfig.status,
+            tmzoneoffset: statusConfig.tmzoneoffset,
+            rssi: statusConfig.rssi,
             connectStatus: ConnectStatus.Online,
           },
         }),

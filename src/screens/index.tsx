@@ -2,6 +2,7 @@ import EnvironmentMonitorScreen from "./EnvironmentMonitorScreen";
 import HttpServerWebView from "./HttpServerWebView";
 import LedStripController from "./LedStripController";
 import MainScreen from "./MainScreen";
+import PlatformInfoScreen from "./PlatformInfoScreen";
 import PlatformSettingScreen from "./PlatformSettingScreen";
 import PlatformSetupScreen from "./PlatformSetupScreen";
 import PowerControllerScreen from "./PowerControllerScreen";
@@ -13,6 +14,7 @@ export {
     HttpServerWebView,
     LedStripController,
     MainScreen,
+    PlatformInfoScreen,
     PlatformSettingScreen,
     PlatformSetupScreen,
     PowerControllerScreen,
