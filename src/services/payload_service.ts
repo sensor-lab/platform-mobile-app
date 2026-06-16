@@ -32,6 +32,8 @@ type PendingRequest = {
   timeout: ReturnType<typeof setTimeout>;
 };
 
+type BinaryMessageCallback = (data: Uint8Array) => boolean | void;
+
 function uint8ToBase64(bytes: Uint8Array): string {
   let binary = "";
   const chunkSize = 0x8000;
@@ -58,7 +60,9 @@ class WebsocketService {
   private deviceType = "";
   private url: string = "wss://iot.sensorsparks.com:8080/testapi";
   private ws: WebSocketWithSelfSignedCert;
-  private pending = new Map<string, PendingRequest>();  private connected = false;
+  private pending = new Map<string, PendingRequest>();
+  private callbacks = new Map<string, BinaryMessageCallback>();
+  private connected = false;
   private connectResolve: ((str: string) => void) | null = null;
   private connectReject: ((err: Error) => void) | null = null;
   private constructor() {
@@ -112,6 +116,15 @@ class WebsocketService {
 
     const pending = this.pending.get(txid);
     if (!pending) {
+      const callback = this.callbacks.get(txid);
+      if (callback) {
+        const shouldUnregister = callback(base64ToUint8(data));
+        if (shouldUnregister) {
+          this.callbacks.delete(txid);
+        }
+        return;
+      }
+
       console.warn(
         `handleBinaryMessage: unmatched txid ${txid} for topic ${topic}， type: ${envelope.messageType()}`,
       );
@@ -122,6 +135,14 @@ class WebsocketService {
     this.pending.delete(txid);
     pending.resolve(base64ToUint8(data));
   };
+
+  public registerCallback(txid: string, callback: BinaryMessageCallback): void {
+    this.callbacks.set(txid, callback);
+  }
+
+  public unregisterCallback(txid: string): void {
+    this.callbacks.delete(txid);
+  }
 
   private constructCommand(
     topic: string,
@@ -259,23 +280,23 @@ class WebsocketService {
       this.connectResolve = resolve;
       this.connectReject = reject;
       this.ws.connect({
-      "X-Ssl-Client-Cert":
-        "MIIC5DCCAcwCFC1/sML6wbqRK9IQamql9wGzzky7MA0GCSqGSIb3DQEBCwUAMC4x" +
-        "FTATBgNVBAoMDFNlbnNvcnNwYXJrczEVMBMGA1UEAwwMU2Vuc29yU3BhcmtzMB4X" +
-        "DTI2MDUxMDE0MzEzN1oXDTM2MDUwNzE0MzEzN1owLzEVMBMGA1UECgwMU2Vuc29y" +
-        "c3BhcmtzMRYwFAYDVQQDDA1tb2JpbGUtY2xpZW50MIIBIjANBgkqhkiG9w0BAQEF" +
-        "AAOCAQ8AMIIBCgKCAQEA0qywm1KFObCd3CJ4wNDB2M8sXw8K3MHMez3QoocrR9lE" +
-        "JL+A9s4dK2MOqU5C/PBPxjcviY63Rj4jz9y5g1fJrxdhqcD7vPBb6WyFLxCaoxxu" +
-        "g2w2pRmhZ7xKDs3xl7C0mCVQnULHbeo7qWPD33ncZ6n0EaYuIHMfGn924O+uC/hy" +
-        "ODFrcTqjV+O/kL25UGlCJwWeqIP6nuvORza0PoDodznRqW6nYdJ5S2TPY7cpN/d5" +
-        "BViFUIapa63+IPI92ddPYdS0nAZpctMVVQMunkMYhruzOG17SKUiNJNN12K01/P7" +
-        "TrsvutqNkS0ZI3kzHXJ5rG5/xWlTt8Xy7+K1xNFT7wIDAQABMA0GCSqGSIb3DQEB" +
-        "CwUAA4IBAQBKAgGmkiTzzEfqWPBrpofhXnb08N9gNh701EVqgD3H40nVA/7AjZOw" +
-        "gF3b421AnQSYR7AE7ObT4/Akab28Rs5cW3Ie0I0hnEaZhSihSyGwcgZUgVyPmkCO" +
-        "IaRJiaMF/KDCIRorY+ezvx7/F7CA1Uncd3GWPl5CI2bEsYjNsBTEKtX+lVoOlHlr" +
-        "/aioA/DXhWECfFijrW3phtzVpjwkfyYG+u5MgVM2srY9wJzdt0ckor2YPjnhp5zV" +
-        "zCmQrFD+/zLhs+4ns4ehc6RVX2E2EbSjZA27stkJl13JariwqxDfU6n/DbEveZoN" +
-        "JdMTxglzFcMZ/gOY99TZHlbSW9RYvXOP",
+        "X-Ssl-Client-Cert":
+          "MIIC5DCCAcwCFC1/sML6wbqRK9IQamql9wGzzky7MA0GCSqGSIb3DQEBCwUAMC4x" +
+          "FTATBgNVBAoMDFNlbnNvcnNwYXJrczEVMBMGA1UEAwwMU2Vuc29yU3BhcmtzMB4X" +
+          "DTI2MDUxMDE0MzEzN1oXDTM2MDUwNzE0MzEzN1owLzEVMBMGA1UECgwMU2Vuc29y" +
+          "c3BhcmtzMRYwFAYDVQQDDA1tb2JpbGUtY2xpZW50MIIBIjANBgkqhkiG9w0BAQEF" +
+          "AAOCAQ8AMIIBCgKCAQEA0qywm1KFObCd3CJ4wNDB2M8sXw8K3MHMez3QoocrR9lE" +
+          "JL+A9s4dK2MOqU5C/PBPxjcviY63Rj4jz9y5g1fJrxdhqcD7vPBb6WyFLxCaoxxu" +
+          "g2w2pRmhZ7xKDs3xl7C0mCVQnULHbeo7qWPD33ncZ6n0EaYuIHMfGn924O+uC/hy" +
+          "ODFrcTqjV+O/kL25UGlCJwWeqIP6nuvORza0PoDodznRqW6nYdJ5S2TPY7cpN/d5" +
+          "BViFUIapa63+IPI92ddPYdS0nAZpctMVVQMunkMYhruzOG17SKUiNJNN12K01/P7" +
+          "TrsvutqNkS0ZI3kzHXJ5rG5/xWlTt8Xy7+K1xNFT7wIDAQABMA0GCSqGSIb3DQEB" +
+          "CwUAA4IBAQBKAgGmkiTzzEfqWPBrpofhXnb08N9gNh701EVqgD3H40nVA/7AjZOw" +
+          "gF3b421AnQSYR7AE7ObT4/Akab28Rs5cW3Ie0I0hnEaZhSihSyGwcgZUgVyPmkCO" +
+          "IaRJiaMF/KDCIRorY+ezvx7/F7CA1Uncd3GWPl5CI2bEsYjNsBTEKtX+lVoOlHlr" +
+          "/aioA/DXhWECfFijrW3phtzVpjwkfyYG+u5MgVM2srY9wJzdt0ckor2YPjnhp5zV" +
+          "zCmQrFD+/zLhs+4ns4ehc6RVX2E2EbSjZA27stkJl13JariwqxDfU6n/DbEveZoN" +
+          "JdMTxglzFcMZ/gOY99TZHlbSW9RYvXOP",
       });
     });
   }
@@ -406,20 +427,28 @@ class WebsocketService {
 
   public sendFwRequest(
     txid: string,
+    devID: string = "",
+    payload: string = "",
+    respTopic: string = "",
     timeoutMs: number = 10000
-  ):Promise<Uint8Array> {
+  ): Promise<Uint8Array> {
     if (!this.connected) return Promise.reject(new Error("not connected"));
     const messageID = uuidv4();
-    const cmdTopic = `firmware.query.latest`;
+    let cmdTopic
+    if (devID == "") {
+      cmdTopic = `firmware.query.latest`;
+    } else {
+      cmdTopic = `platform.${devID}.command`
+    }
     const command = this.constructCommand(
       cmdTopic,
       txid,
       messageID,
       CommandType.FirmwareImage.valueOf(),
-      "",
+      payload,
       this.deviceType,
-      "",
-      "",
+      devID,
+      respTopic,
     );
 
     return new Promise((resolve, reject) => {
@@ -647,7 +676,7 @@ class WebsocketService {
     });
   }
 
-  public async queryLatestFw(devID: string): Promise<{
+  public async queryLatestFw(): Promise<{
     version: string;
     size: number;
     filename: string;
@@ -674,6 +703,31 @@ class WebsocketService {
         reject(new Error(`does not receive valid firmware info`));
       }
     });
+  }
+
+  public async triggerFwUpdate(
+    devID: string,
+    onUpdate?: BinaryMessageCallback,
+  ): Promise<string> {
+    const txid = uuidv4()
+    const queueName = `platform.${devID}`;
+    const respTopic = `platform.ephemeral.${devID}-${txid}`;
+    const subResp = await this.sendSubscribe(
+      respTopic,
+      txid,
+      queueName,
+      "",
+      TopicType.TOPIC_TYPE_EPHEMERAL_TOPIC,
+    );
+    if (onUpdate) {
+      console.log(`register call back on txid: ${txid}`)
+      this.registerCallback(txid, onUpdate);
+    }
+    const payload = {
+      interval: 5
+    }
+    const resp = await this.sendFwRequest(txid, devID, JSON.stringify(payload), respTopic);
+    return txid;
   }
 }
 

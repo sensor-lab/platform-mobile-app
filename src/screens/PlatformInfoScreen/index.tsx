@@ -1,22 +1,61 @@
 import {
-    Loader,
     MainContainer,
     MainHeader,
     PrimaryButton,
-    Text,
+    Text
 } from "@/src/components";
 import { Images } from "@/src/config";
 import { useTheme } from "@/src/hooks";
 import { ConnectStatus } from "@/src/redux/reducers";
+import { FlatbuffersCommand, FlatbuffersEnvelope, Message } from "@/src/services/flatbuffersmsg";
 import { WebsocketService } from "@/src/services/payload_service";
-import { SD, toast } from "@/src/utils";
+import { SD, Toast } from "@/src/utils";
 import CommonUtils from "@/src/utils/common.utils";
-import { useEffect, useMemo, useState } from "react";
+import * as flatbuffers from "flatbuffers";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSelector } from "react-redux";
-import { v4 as uuidv4 } from "uuid";
 import { CustomImage } from "../../components/custom-image";
 import { RootState } from "../../redux";
+import UpdateProgressModal from "./components/UpdateProgressModal";
+
+type FirmwareUpdateResponse = {
+    state: number;
+    payload: string;
+};
+
+const SUCCESS_PAYLOAD_REGEX = /success/i;
+const FAIL_PAYLOAD_REGEX = /fail/i;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 10000; // 10 seconds
+
+const parseFirmwareUpdateResponse = (data: Uint8Array): FirmwareUpdateResponse => {
+    const bb = new flatbuffers.ByteBuffer(data);
+    const envelope = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(bb);
+
+    if (envelope.messageType() !== Message.FlatbuffersCommand) {
+        throw new Error("固件更新响应格式异常");
+    }
+
+    const command = envelope.message(new FlatbuffersCommand());
+    const payloadBytes = command.payloadArray();
+
+    if (!payloadBytes) {
+        throw new Error("固件更新响应缺少 payload");
+    }
+
+    const payloadText = new TextDecoder("utf-8").decode(payloadBytes);
+    const parsed = JSON.parse(payloadText) as Partial<FirmwareUpdateResponse>;
+
+    if (typeof parsed.state !== "number" || typeof parsed.payload !== "string") {
+        throw new Error("固件更新响应字段不完整");
+    }
+
+    return {
+        state: parsed.state,
+        payload: parsed.payload,
+    };
+};
 
 const mapPlatformStatusText = (
     connectStatus: ConnectStatus,
@@ -32,9 +71,16 @@ const mapPlatformStatusText = (
 
 const PlatformInfoScreen = ({ navigation, route }: { navigation: any; route: any }) => {
     const id = route?.params?.id;
+    const latestFwVer = route?.params?.latestFwVer;
     const { AppTheme } = useTheme();
-    const [loading, setLoading] = useState(false);
-    const [latestFwVersion, setLatestFwVersion] = useState<string | undefined>();
+    const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
+    const [updateProgress, setUpdateProgress] = useState(0);
+    const [updateStatus, setUpdateStatus] = useState("准备开始更新");
+    const [isUpdating, setIsUpdating] = useState(false);
+    const updateTxidRef = useRef<string | null>(null);
+    const rebootTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const updateTotalBytesRef = useRef(0);
+    const updateFinishedRef = useRef(false);
 
     const platformDetail = useSelector(
         (state: RootState) => state.platform.platformDetailsByID[id],
@@ -47,24 +93,17 @@ const PlatformInfoScreen = ({ navigation, route }: { navigation: any; route: any
     }, [platformDetail, navigation]);
 
     useEffect(() => {
-        if (!platformDetail?.fwVersion) return;
-
-        const fetchLatestFw = async () => {
-            try {
-                setLoading(true);
-                const ws = WebsocketService.getInstance();
-                const txid = uuidv4();
-                const resp = await ws.queryLatestFw(txid);
-                setLatestFwVersion(resp?.version);
-            } catch (error) {
-                console.log("Failed to query latest firmware", error);
-            } finally {
-                setLoading(false);
+        return () => {
+            if (rebootTimerRef.current) {
+                clearTimeout(rebootTimerRef.current);
+                rebootTimerRef.current = null;
+            }
+            if (updateTxidRef.current) {
+                WebsocketService.getInstance().unregisterCallback(updateTxidRef.current);
+                updateTxidRef.current = null;
             }
         };
-
-        fetchLatestFw();
-    }, [platformDetail?.fwVersion]);
+    }, []);
 
     if (!platformDetail) return null;
 
@@ -76,12 +115,171 @@ const PlatformInfoScreen = ({ navigation, route }: { navigation: any; route: any
     const signalStrength = platformDetail.rssi ?? "未知";
 
     const canUpdateFw = useMemo(() => {
-        return CommonUtils.compareVersions(latestFwVersion, platformDetail.fwVersion) > 0;
-    }, [latestFwVersion, platformDetail.fwVersion]);
+        return CommonUtils.compareVersions(latestFwVer, platformDetail.fwVersion) > 0;
+    }, [latestFwVer, platformDetail.fwVersion]);
 
-    const onUpdateFirmware = () => {
+    const checkDeviceStatus = async (ws: WebsocketService, retryCount = 0) => {
+        try {
+            await ws.queryStatus(id);
+
+            setUpdateStatus("更新完成，设备已重新上线");
+            setIsUpdating(false);
+            Toast.success("固件更新成功");
+
+            rebootTimerRef.current = null;
+        } catch (error) {
+            console.log(`status check failed (attempt ${retryCount + 1})`, error);
+
+            if (retryCount < MAX_RETRIES - 1) {
+                // schedule next retry
+                rebootTimerRef.current = setTimeout(() => {
+                    checkDeviceStatus(ws, retryCount + 1);
+                }, RETRY_DELAY);
+            } else {
+                // all retries failed
+                failFirmwareUpdate("固件已写入，但设备未能在多次尝试后恢复在线");
+                rebootTimerRef.current = null;
+            }
+        }
+    };
+
+    const failFirmwareUpdate = (message: string) => {
+        updateFinishedRef.current = true;
+
+        if (rebootTimerRef.current) {
+            clearTimeout(rebootTimerRef.current);
+            rebootTimerRef.current = null;
+        }
+
+        if (updateTxidRef.current) {
+            WebsocketService.getInstance().unregisterCallback(updateTxidRef.current);
+            updateTxidRef.current = null;
+        }
+
+        setIsUpdating(false);
+        setUpdateStatus(message);
+        Toast.fail(message);
+    };
+
+    const finalizeFirmwareUpdate = async () => {
+        if (updateFinishedRef.current) return;
+
+        updateFinishedRef.current = true;
+
+        if (updateTxidRef.current) {
+            WebsocketService.getInstance().unregisterCallback(updateTxidRef.current);
+            updateTxidRef.current = null;
+        }
+
+        setUpdateProgress(100);
+        setUpdateStatus("固件下载完成，设备正在重启...");
+
+        if (rebootTimerRef.current) {
+            clearTimeout(rebootTimerRef.current);
+        }
+
+        const ws = WebsocketService.getInstance();
+        await ws.connect();
+        rebootTimerRef.current = setTimeout(() => {
+            checkDeviceStatus(ws);
+        }, RETRY_DELAY);
+    };
+
+    const handleFirmwareUpdateMessage = (data: Uint8Array): boolean => {
+        if (updateFinishedRef.current) return true;
+
+        try {
+            const response = parseFirmwareUpdateResponse(data);
+            const payload = response.payload.trim();
+
+            if (SUCCESS_PAYLOAD_REGEX.test(payload)) {
+                void finalizeFirmwareUpdate();
+                return true;
+            } else if (FAIL_PAYLOAD_REGEX.test(payload)) {
+                const errorMsg = `OTA update finished with error: ${payload}`
+                console.log(errorMsg)
+                throw new Error(errorMsg)
+            } else if (response.state == 1) {
+                // back to OTA waiting state, indicating a failure
+                const errorMsg = `OTA update encounters a failure: ${payload}`
+                console.log(errorMsg)
+                throw new Error(errorMsg)
+            }
+
+            const downloadedBytes = Number(payload);
+            if (!Number.isFinite(downloadedBytes) || downloadedBytes < 0) {
+                console.log(`unknown payload from server: ${payload}`);
+            }
+
+            const totalBytes = updateTotalBytesRef.current;
+            if (!Number.isFinite(totalBytes) || totalBytes <= 0) {
+                console.log("固件大小无效，无法计算进度");
+            }
+
+            const progress = Math.max(
+                1,
+                Math.min(99, Math.round((downloadedBytes / totalBytes) * 100)),
+            );
+
+            setUpdateStatus(`固件下载中`,);
+            if (!Number.isNaN(progress)) {
+                setUpdateProgress(progress);
+            } else {
+                setUpdateProgress(0);
+
+            }
+            return false;
+        } catch (error) {
+            console.log("firmware update response parse failed", error);
+            failFirmwareUpdate("固件更新响应异常，请重试");
+            return true;
+        }
+    };
+
+    const onUpdateFirmware = async () => {
         if (!canUpdateFw) return;
-        toast.info(`检测到新版本 ${latestFwVersion}，请开始固件更新流程`, 5000);
+        if (!id) {
+            Toast.fail("设备ID无效，无法更新");
+            return;
+        }
+
+        updateFinishedRef.current = false;
+        updateTotalBytesRef.current = 0;
+
+        Toast.info(`检测到新版本 ${latestFwVer}，正在准备更新`, 3000);
+        setUpdateProgress(0);
+        setUpdateStatus("正在初始化更新任务...");
+        setIsUpdateModalVisible(true);
+        setIsUpdating(true);
+
+        try {
+            const ws = WebsocketService.getInstance();
+            await ws.connect();
+            const latestFw = await ws.queryLatestFw();
+            if (!latestFw?.size || latestFw.size <= 0) {
+                throw new Error("未能获取固件大小");
+            }
+
+            updateTotalBytesRef.current = latestFw.size;
+            setUpdateStatus("正在发送固件更新指令...");
+
+            updateTxidRef.current = await ws.triggerFwUpdate(
+                id,
+                handleFirmwareUpdateMessage,
+            );
+        } catch (error) {
+            console.log("triggerFwUpdate failed", error);
+            failFirmwareUpdate(
+                error instanceof Error
+                    ? error.message
+                    : "触发固件更新失败，请重试",
+            );
+        }
+    };
+
+    const onCloseUpdateModal = () => {
+        if (isUpdating) return;
+        setIsUpdateModalVisible(false);
     };
 
     return (
@@ -148,7 +346,13 @@ const PlatformInfoScreen = ({ navigation, route }: { navigation: any; route: any
                 />
             </View>
 
-            <Loader visible={loading} text="检查更新中..." />
+            <UpdateProgressModal
+                isVisible={isUpdateModalVisible}
+                progress={updateProgress}
+                status={updateStatus}
+                onClose={onCloseUpdateModal}
+                canClose={!isUpdating}
+            />
         </MainContainer>
     );
 };

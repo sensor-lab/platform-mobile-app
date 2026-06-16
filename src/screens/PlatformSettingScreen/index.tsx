@@ -3,12 +3,11 @@ import {
   CustomImage,
   CustomModal,
   CustomTouchable,
-  Loader,
   MainContainer,
   MainHeader,
   PrimaryButton,
   SectionContainer,
-  Text,
+  Text
 } from "@/src/components";
 import { Images, ScreenNames } from "@/src/config";
 import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
@@ -18,7 +17,6 @@ import CommonUtils from "@/src/utils/common.utils";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { useSelector } from "react-redux";
-import { v4 as uuidv4 } from "uuid";
 import { RootState } from "../../redux";
 import { SD } from "../../utils";
 import { toast } from "../../utils/toast.utils";
@@ -51,7 +49,7 @@ const apps: Record<string, { label: string; value: string; icon: number }[]> = {
 
 const PlatformSettingScreen = ({ navigation, route }) => {
   const id = route?.params?.id;
-  const [loading, setLoading] = useState("");
+  const [latestFwVer, setLatestFwVer] = useState("");
   const [showAddAppsModal, setShowAddAppsModal] = useState(false);
   const [addedApps, setAddedApps] = useState<string[]>([]);
   const platformDetail = useSelector(
@@ -64,12 +62,12 @@ const PlatformSettingScreen = ({ navigation, route }) => {
     const fetchFw = async () => {
       try {
         const ws = WebsocketService.getInstance();
-        const txid = uuidv4();
-        const resp = await ws.queryLatestFw(txid);
+        const resp = await ws.queryLatestFw();
 
         if (CommonUtils.compareVersions(resp?.version, platformDetail.fwVersion) > 0) {
           toast.info(`发现新固件版本 ${resp.version}，当前版本 ${platformDetail.fwVersion}`, 8000);
         }
+        setLatestFwVer(resp?.version)
       } catch (error) {
         console.log("Failed to query latest firmware", error);
       }
@@ -257,7 +255,7 @@ const PlatformSettingScreen = ({ navigation, route }) => {
       >
         <Pressable
           style={{ marginVertical: SD.hp(15) }}
-          onPress={() => navigation.navigate(ScreenNames.PlatformInfoScreen, { id })}
+          onPress={() => navigation.navigate(ScreenNames.PlatformInfoScreen, { id, latestFwVer })}
         >
           <CustomImage source={Images.platform} style={styles.deviceImage} />
           <Text
@@ -343,7 +341,6 @@ const PlatformSettingScreen = ({ navigation, route }) => {
         onAddNewApp={handleAddApp}
         status={Status}
       />
-      <Loader visible={!!loading} text={loading} />
     </MainContainer>
   );
 };
