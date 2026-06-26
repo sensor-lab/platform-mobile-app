@@ -10,7 +10,18 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sensorsparks.mobileapp"
+      "bundleIdentifier": "com.sensorsparks.mobileapp",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSExceptionDomains": {
+            "iot.sensorsparks.com": {
+              "NSIncludesSubdomains": true,
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSExceptionRequiresForwardSecrecy": false
+            }
+          }
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -32,16 +43,16 @@
           "backgroundColor": "#FFFFFF"
         }
       ]
-      // "expo-build-properties",
-      // {
-      //   "ios": {
-      //     "networkInspector": false
-      //   }
-      // }
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "86c89e24-9245-469c-9ed7-c20698ced910"
+      }
     }
   }
 }
