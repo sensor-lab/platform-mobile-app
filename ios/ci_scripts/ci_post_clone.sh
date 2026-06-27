@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+brew install node
+
 echo "Installing dependencies..."
 npm install
 
