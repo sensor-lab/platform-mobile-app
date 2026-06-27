@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -xe
 
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
@@ -13,4 +13,4 @@ CI=1 npx expo prebuild --platform ios
 
 echo "Installing CocoaPods..."
 cd ios
-pod install
+pod install --repo-update --clean-install
