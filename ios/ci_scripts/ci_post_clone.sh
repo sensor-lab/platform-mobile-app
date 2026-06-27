@@ -1,13 +1,15 @@
 #!/bin/sh
 set -e
 
+cd "$CI_PRIMARY_REPOSITORY_PATH"
+
 brew install node
 
 echo "Installing dependencies..."
 npm install
 
 echo "Running Expo prebuild..."
-npx expo prebuild --platform ios --non-interactive
+CI=1 npx expo prebuild --platform ios
 
 echo "Installing CocoaPods..."
 cd ios
