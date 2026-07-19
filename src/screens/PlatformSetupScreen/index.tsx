@@ -1,6 +1,7 @@
 import { ScreenNames } from "@/src/config";
 import { ConnectStatus, setPlatformDetailsById } from "@/src/redux/reducers";
 import { WebsocketService } from "@/src/services/payload_service";
+import { ProvisionService } from "@/src/services/provision_service";
 import { toast } from "@/src/utils/toast.utils";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
@@ -14,11 +15,13 @@ import {
   PrimaryButton,
 } from "../../components";
 import { useTheme } from "../../hooks";
+import { usePermission } from "../../hooks/usePermission";
 import { SD } from "../../utils";
 
 const PlatformSetupScreen = ({ navigation, route }) => {
   const [platformID, setPlatformID] = useState("");
   const { AppTheme } = useTheme();
+  const { checkAndRequestPermission } = usePermission("wifi");
   const [loading, setLoading] = useState<string | null>(null);
   const dispatch = useDispatch();
   const { platformDetailsByID } = useSelector((state: any) => state.platform);
@@ -28,17 +31,27 @@ const PlatformSetupScreen = ({ navigation, route }) => {
   }, []);
 
   const handleTestConnection = async () => {
-    console.log(`Test connection for ${platformID}`);
-    const payload = '{"event":"now","actions":[["gpio", "led", "output", 2]]}';
-    const ws = WebsocketService.getInstance();
-    setLoading("连接测试中");
-    try {
-      await ws.executeCommand(platformID, payload);
-      toast.success("成功翻转绿色创意盒LED灯");
-    } catch (err) {
-      toast.fail("失败", "测试连接失败");
+    // console.log(`Test connection for ${platformID}`);
+    // const payload = '{"event":"now","actions":[["gpio", "led", "output", 2]]}';
+    // const ws = WebsocketService.getInstance();
+    // setLoading("连接测试中");
+    // try {
+    //   await ws.executeCommand(platformID, payload);
+    //   toast.success("成功翻转绿色创意盒LED灯");
+    // } catch (err) {
+    //   toast.fail("失败", "测试连接失败");
+    // }
+    // setLoading(null);
+    // Method 1.
+    // Get devices...
+    const hasPermission = await checkAndRequestPermission();
+    if (!hasPermission) {
+      toast.fail("失败", "需要位置权限才能连接 Wi-Fi 设备");
+      return;
     }
-    setLoading(null);
+
+    console.log("ESP provisioining!")
+    await ProvisionService.connect()
   };
 
   const handleAddDevice = async () => {

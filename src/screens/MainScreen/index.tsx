@@ -70,7 +70,8 @@ function MainScreen({ navigation }) {
   }, [platformDetailsByID]);
 
   const handleAddNow = () => {
-    navigation.navigate(ScreenNames.PlatformSetupScreen);
+    // navigation.navigate(ScreenNames.PlatformSetupScreen);
+    navigation.navigate(ScreenNames.ProvisionStartScreen);
   };
 
   const handleOpenLink = (link, heading) => {

@@ -9,6 +9,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import { ScreenNames } from "./src/config";
 import { persistor, store } from "./src/redux";
 import {
+  ConnectWifiScreen,
   EnvironmentMonitorScreen,
   LedStripController,
   MainScreen,
@@ -16,7 +17,11 @@ import {
   PlatformSettingScreen,
   PlatformSetupScreen,
   PowerControllerScreen,
+  ProvisionFinishScreen,
+  ProvisionModeSelectScreen,
+  ProvisionStartScreen,
   RemoteCameraScreen,
+  SetWifiPasswordScreen,
   TestAppScreen,
 } from "./src/screens";
 
@@ -40,6 +45,26 @@ export default function App() {
                   <Stack.Screen
                     name={ScreenNames.PlatformSetupScreen}
                     component={PlatformSetupScreen}
+                  />
+                  <Stack.Screen
+                    name={ScreenNames.ProvisionStartScreen}
+                    component={ProvisionStartScreen}
+                  />
+                  <Stack.Screen
+                    name={ScreenNames.ProvisionModeSelectScreen}
+                    component={ProvisionModeSelectScreen}
+                  />
+                  <Stack.Screen
+                    name={ScreenNames.ConnectWifiScreen}
+                    component={ConnectWifiScreen}
+                  />
+                  <Stack.Screen
+                    name={ScreenNames.SetWifiPasswordScreen}
+                    component={SetWifiPasswordScreen}
+                  />
+                  <Stack.Screen
+                    name={ScreenNames.ProvisionFinishScreen}
+                    component={ProvisionFinishScreen}
                   />
                   <Stack.Screen
                     name={ScreenNames.PlatformSettingScreen}

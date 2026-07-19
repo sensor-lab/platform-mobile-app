@@ -32,6 +32,12 @@
         "foregroundImage": "./assets/images/splash_icon_220_220_background.png",
         "backgroundImage": "./assets/images/splash_icon_220_220_background.png"
       },
+      "permissions": [
+        "CHANGE_WIFI_STATE",
+        "ACCESS_WIFI_STATE",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_FINE_LOCATION"
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.sensorsparks.mobileapp"
@@ -44,6 +50,14 @@
           "image": "./assets/images/splash/splash_icon.png",
           "resizeMode": "cover",
           "backgroundColor": "#FFFFFF"
+        }
+      ],
+      [
+        "@orbital-systems/react-native-esp-idf-provisioning",
+        {
+          "transport": "softap",
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location while provisioning over Wi-Fi.",
+          "localNetworkPermission": "Allow $(PRODUCT_NAME) to communicate with devices on your local network while provisioning."
         }
       ]
     ],

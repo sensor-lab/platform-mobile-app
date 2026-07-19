@@ -11,6 +11,9 @@ const Images = {
   environmentApp: require("./../../../assets/icons/environmentAppIcon.png"),
   remoteCameraApp: require("./../../../assets/icons/remoteCameraIcon.png"),
   powerControllerApp: require("./../../../assets/icons/powerControlIcon.png"),
+  provisionStartPlatform: require("./../../../assets/images/provision/provision_start.png"),
+  provisionFinishConfiguration: require("./../../../assets/icons/configuration.png"),
+  provisionFinishInternetConnect: require("./../../../assets/icons/internetConnect.png"),
 
   BackBtn: require("../../../assets/icons/backArrow.png"),
   NoResults: require("../../../assets/icons/NoResults.png"),

@@ -35,7 +35,7 @@ export const MainHeader: React.FC<BackHeaderProps> = ({
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   const handleGoBack = () => navigation.goBack();
-  const handleAddPrinter = () =>
+  const handleAddPlatform = () =>
     navigation.navigate(ScreenNames.PlatformSetupScreen);
 
   return (
@@ -62,7 +62,7 @@ export const MainHeader: React.FC<BackHeaderProps> = ({
             style={styles.logoStyles}
           />
           {showPlusIcon && (
-            <Pressable onPress={handleAddPrinter}>
+            <Pressable onPress={handleAddPlatform}>
               <CustomImage source={Images.plusIcon} style={styles.plusIcon} />
             </Pressable>
           )}

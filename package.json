@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "@orbital-systems/react-native-esp-idf-provisioning": "^0.5.5",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/blur": "^4.4.1",
     "@react-navigation/bottom-tabs": "^7.4.0",
@@ -44,6 +45,7 @@
     "react-native-gesture-handler": "~2.28.0",
     "react-native-get-random-values": "^2.0.0",
     "react-native-modal": "^14.0.0-rc.1",
+    "react-native-permissions": "^5.6.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-responsive-screen": "^1.4.2",
     "react-native-safe-area-context": "~5.6.0",

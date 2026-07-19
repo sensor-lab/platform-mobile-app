@@ -9,4 +9,9 @@ export const ScreenNames = {
   EnvironmentMonitorScreen: "EnvironmentMonitor",
   RemoteCameraScreen: "RemoteCamera",
   PowerControllerScreen: "PowerController",
+  ProvisionStartScreen: "ProvisionStartScreen",
+  ProvisionModeSelectScreen: "ProvisionModeSelectScreen",
+  ConnectWifiScreen: "ConnectWifiScreen",
+  SetWifiPasswordScreen: "SetWifiPasswordScreen",
+  ProvisionFinishScreen: "ProvisionFinishScreen",
 };
