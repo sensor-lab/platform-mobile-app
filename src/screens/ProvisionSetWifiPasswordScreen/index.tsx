@@ -1,4 +1,3 @@
-import NetInfo from "@react-native-community/netinfo";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import { useDispatch } from "react-redux";
