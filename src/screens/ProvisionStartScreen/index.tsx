@@ -1,3 +1,4 @@
+import { WebsocketService } from "@/src/services/payload_service";
 import { ProvisionService } from "@/src/services/provision_service";
 import { toast } from "@/src/utils/toast.utils";
 import { View } from "react-native";
@@ -22,7 +23,11 @@ const ProvisionStartScreen = ({ navigation }: any) => {
 
     console.log("ESP provisioining!")
 
-    await ProvisionService.connect()
+    console.log("close existing websocket if any")
+    const ws = WebsocketService.getInstance();
+    await ws.close();
+
+    await ProvisionService.connect();
 
     navigation.navigate(ScreenNames.ProvisionModeSelectScreen);
   };

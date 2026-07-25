@@ -1,24 +1,62 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
-import { MainContainer, MainHeader, PrimaryButton, Text } from "../../components";
-import { ScreenNames } from "../../config";
-import { toast } from "../../utils/toast.utils";
+import {
+    ConnectionStatusModal,
+    MainContainer,
+    MainHeader,
+    PrimaryButton,
+    Text,
+} from "../../components";
+import { Images, ScreenNames } from "../../config";
+import { ProvisionService } from "../../services/provision_service";
 import { styles } from "./styles";
 
 type Mode = "station" | "hotspot" | null;
 
 const ProvisionModeSelectScreen = ({ navigation }: any) => {
     const [selectedMode, setSelectedMode] = useState<Mode>(null);
+    const [devId, setDevId] = useState("");
+    const [error, setError] = useState("");
+
+    const loadDeviceId = async () => {
+        const id = (await ProvisionService.devId())?.trim() ?? "";
+        setDevId(id);
+        if (!id) {
+            setError("未获取到设备编号，请重试");
+        }
+    };
+
+    useEffect(() => {
+        void (async () => {
+            await loadDeviceId();
+        })();
+    }, []);
 
     const handleNext = () => {
         if (!selectedMode) return;
-
-        if (selectedMode === "station") {
-            navigation.navigate(ScreenNames.ConnectWifiScreen);
+        if (!devId) {
+            setError("未获取到设备编号，请重试");
             return;
         }
 
-        toast.fail("提示", "热点模式流程暂未开放");
+        if (selectedMode === "station") {
+            navigation.navigate(ScreenNames.ProvisionConnectWifiScreen);
+            return;
+        } else {
+            navigation.navigate(ScreenNames.ProvisionSetWifiPasswordScreen, {
+                mode: "accesspoint",
+            });
+        }
+    };
+
+    const handleRetry = () => {
+        setError("");
+        void loadDeviceId();
+    };
+
+    const handleCloseError = () => {
+        setError("");
+        navigation.navigate(ScreenNames.ProvisionStartScreen);
     };
 
     return (
@@ -71,6 +109,14 @@ const ProvisionModeSelectScreen = ({ navigation }: any) => {
                     disabled={!selectedMode}
                 />
             </View>
+            <ConnectionStatusModal
+                isVisible={!!error}
+                onClose={handleCloseError}
+                icon={Images.failWifi}
+                title={"无法获取设备编号"}
+                description={error}
+                onRetry={handleRetry}
+            />
         </MainContainer>
     );
 };

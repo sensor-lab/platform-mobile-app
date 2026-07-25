@@ -16,11 +16,11 @@ class ProvisionServiceInstance {
   connect = async() => {
     try {
       // Connect to device with proofOfPossession
-      const proofOfPossession = 'ufex8481';
+      const proofOfPossession = 'uefj9382';
       await this.device.connect(proofOfPossession);
-      const resp = await this.device.sendData("dev-id", "")
+      const resp = await this.device.sendData("dev-id", "--")
       console.log(`get device ID: ${resp}`)
-      this.dev_id = resp        
+      this.dev_id = resp
     } catch (e) {
       console.log(`provision start error: ${e}`)
       if (e instanceof Error) {
@@ -28,6 +28,10 @@ class ProvisionServiceInstance {
         console.log('stack:', e.stack);
       }
     }
+  }
+
+  devId = async(): Promise<string> => {
+    return this.dev_id
   }
 
   listWiFi = async() => {

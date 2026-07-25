@@ -62,7 +62,8 @@ function MainScreen({ navigation }) {
     });
     if (sortedPlatforms.length == 0) {
       const connect = async () => {
-        await WebsocketService.getInstance().connect();
+        const ws = WebsocketService.getInstance();
+        await ws.connect();
       };
       connect();
     }

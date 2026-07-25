@@ -1,12 +1,11 @@
 import { View } from "react-native";
-import CustomModal from "../custom-modal";
-import { CustomImage } from "../custom-image";
-import { Images } from "../../config";
-import Text from "../text";
-import { PrimaryButton } from "../primary-button";
-import { styles } from "./styles";
 import { useTheme } from "../../hooks";
 import { SD } from "../../utils";
+import { CustomImage } from "../custom-image";
+import CustomModal from "../custom-modal";
+import { PrimaryButton } from "../primary-button";
+import Text from "../text";
+import { styles } from "./styles";
 
 export const ConnectionStatusModal = ({
   isVisible,
@@ -39,7 +38,7 @@ export const ConnectionStatusModal = ({
         </Text>
         <View style={styles.modalBtnsView}>
           <PrimaryButton
-            title="Cancel"
+            title="取消"
             customStyles={{
               flex: 2,
               marginHorizontal: SD.wp(5),
@@ -48,7 +47,7 @@ export const ConnectionStatusModal = ({
             onPress={onClose}
           />
           <PrimaryButton
-            title="Retry"
+            title="重试"
             customStyles={{ flex: 2, borderRadius: 15 }}
             onPress={onRetry}
           />

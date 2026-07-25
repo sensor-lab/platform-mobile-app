@@ -11,7 +11,7 @@ export const ScreenNames = {
   PowerControllerScreen: "PowerController",
   ProvisionStartScreen: "ProvisionStartScreen",
   ProvisionModeSelectScreen: "ProvisionModeSelectScreen",
-  ConnectWifiScreen: "ConnectWifiScreen",
-  SetWifiPasswordScreen: "SetWifiPasswordScreen",
+  ProvisionConnectWifiScreen: "ProvisionConnectWifiScreen",
+  ProvisionSetWifiPasswordScreen: "ProvisionSetWifiPasswordScreen",
   ProvisionFinishScreen: "ProvisionFinishScreen",
 };

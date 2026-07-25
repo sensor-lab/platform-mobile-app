@@ -1,23 +1,112 @@
+import { useState } from "react";
 import { View } from "react-native";
+import { useDispatch } from "react-redux";
 import {
+  ConnectionStatusModal,
   CustomImage,
+  Loader,
   MainContainer,
   PrimaryButton,
   Text,
 } from "../../components";
 import { Images, ScreenNames } from "../../config";
 import { useTheme } from "../../hooks";
+import { ConnectStatus, setPlatformDetailsById } from "../../redux/reducers";
+import { WebsocketService } from "../../services/payload_service";
+import { ProvisionService } from "../../services/provision_service";
+import { toast } from "../../utils/toast.utils";
 import { PlatformSetupStepsCard } from "./components";
 import { styles } from "./styles";
 
-const ProvisionFinishScreen = ({ navigation, route }) => {
-  const { AppTheme } = useTheme();
-  const isSuccess = route?.params?.isSuccess || false;
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const handleNext = () => {
-    navigation.replace(ScreenNames.MainScreen, {
-      setup: isSuccess ? "completed" : null,
-    });
+const ProvisionFinishScreen = ({ navigation, route }: any) => {
+  const { AppTheme } = useTheme();
+  const dispatch = useDispatch();
+  const isSuccess = route?.params?.isSuccess || false;
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState("");
+  let devId = route?.params?.devId || ProvisionService.getDevId();
+
+  const handleCancel = () => {
+    setError("");
+    navigation.navigate(ScreenNames.MainScreen);
+  };
+
+  const handleRetry = () => {
+    setError("");
+    void handleNext();
+  };
+
+  const handleNext = async () => {
+    setError("");
+    setLoading("正在连接云服务器...");
+
+    if (!devId) {
+      setLoading("");
+      toast.fail("失败", "未获取到设备编号，请重试");
+      return;
+    }
+
+    let i = 0;
+    let connectedAndSynced = false;
+    let lastError: unknown = null;
+    const ws = WebsocketService.getInstance();
+    try {
+      await ws.connect();
+    } catch (e) {
+      console.log(`error connect: ${e}`);
+      lastError = e;
+    }
+
+    while (i < 10) {
+      i++;
+      await wait(2000);
+      try {
+        const status = await ws.queryStatus(devId);
+        const config = await ws.queryConfig(devId);
+        const statusConfig = {
+          ...status,
+          ...config,
+        };
+
+        toast.success(`成功添加平台${devId}`);
+
+        dispatch(
+          setPlatformDetailsById({
+            id: devId,
+            details: {
+              id: devId,
+              mdnsName: statusConfig.mdns,
+              fwVersion: statusConfig.fwver,
+              hardwareVersion: statusConfig.hwver,
+              voltage: statusConfig.voltage,
+              platformStatus: statusConfig.status,
+              tmzoneoffset: statusConfig.tmzoneoffset,
+              rssi: statusConfig.rssi,
+              connectStatus: ConnectStatus.Online,
+            },
+          }),
+        );
+
+        navigation.replace(ScreenNames.MainScreen, {
+          setup: "completed",
+        });
+
+        connectedAndSynced = true;
+        setLoading("");
+
+        break;
+      } catch (e) {
+        console.log(`error: ${e}`);
+      }
+    }
+
+    if (!connectedAndSynced) {
+      setLoading("");
+      setError("无法和云服务器连接");
+    }
+
   };
   return (
     <MainContainer mainContainerStyle={{ backgroundColor: "#FFFFFF", flex: 1 }}>
@@ -55,9 +144,9 @@ const ProvisionFinishScreen = ({ navigation, route }) => {
           />
           <VerticalLine />
           <PlatformSetupStepsCard
-            isActive={isSuccess}
+            isActive={false}
             icon={Images.provisionFinishInternetConnect}
-            text="连接成功"
+            text="测试和平台云连接"
           />
         </View>
       </View>
@@ -70,6 +159,15 @@ const ProvisionFinishScreen = ({ navigation, route }) => {
           onPress={handleNext}
         />
       </View>
+      <ConnectionStatusModal
+        isVisible={!!error}
+        onClose={handleCancel}
+        icon={Images.failWifi}
+        title={"连接云服务器失败"}
+        description={error}
+        onRetry={handleRetry}
+      />
+      <Loader visible={!!loading} text={loading} />
     </MainContainer>
   );
 };

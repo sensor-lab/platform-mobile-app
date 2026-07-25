@@ -1,5 +1,7 @@
+import NetInfo from "@react-native-community/netinfo";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { useDispatch } from "react-redux";
 import {
   ConnectionStatusModal,
   CustomImage,
@@ -24,17 +26,52 @@ type WifiNetwork = {
   ssid: string;
 };
 
-const SetWifiPasswordScreen = ({ navigation, route }: any) => {
+type ProvisionMode = "station" | "accesspoint";
+
+const STATUS_POLL_INTERVAL_MS = 15000;
+const STATUS_POLL_TIMEOUT_MS = 3 * 60 * 1000;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForInternet = (timeoutMs: number = STATUS_POLL_TIMEOUT_MS): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const deadline = Date.now() + timeoutMs;
+    const check = async () => {
+      const state = await NetInfo.fetch();
+      if (state.isConnected && state.isInternetReachable) {
+        resolve();
+        return;
+      }
+      if (Date.now() >= deadline) {
+        reject(new Error("Internet connection not available"));
+        return;
+      }
+      console.log("Waiting for internet connection...");
+      setTimeout(check, 2000);
+    };
+    check();
+  });
+
+const ProvisionSetWifiPasswordScreen = ({ navigation, route }: any) => {
   const { AppTheme } = useTheme();
+  const dispatch = useDispatch();
+  const mode = (route?.params?.mode as ProvisionMode | undefined) ?? "station";
   const router = route?.params?.wifi as WifiNetwork | undefined;
+  const [accessPointName, setAccessPointName] = useState("");
   const [wifiPassword, setWifiPassword] = useState("");
   const [showPassword, setShowPassword] = useState(true);
   const [error, setError] = useState("")
   const [loading, setLoading] = useState("");
 
-  const handleOnClose = () => {
+  const handleCancel = () => {
     setError("");
+    navigation.navigate(ScreenNames.MainScreen)
   };
+
+  const handleRetry = () => {
+    setError("");
+    navigation.navigate(ScreenNames.ProvisionStartScreen)
+  }
 
   const handleTriggerShowPassword = () => {
     setShowPassword(!showPassword);
@@ -43,23 +80,62 @@ const SetWifiPasswordScreen = ({ navigation, route }: any) => {
   const handleApply = async () => {
     try {
       setError("");
-      setLoading("正在和路由器连接")
-      if (!router?.ssid) {
-        toast.fail("失败", "未找到路由器信息");
-        return;
+      if (mode === "station") {
+        setLoading("正在和路由器连接")
+        if (!router?.ssid) {
+          toast.fail("失败", "未找到路由器信息");
+          return;
+        }
+
+        const resp = await ProvisionService.ssidConnect(router.ssid, wifiPassword);
+        if (resp == "AUTH_FAILED") {
+          setLoading("")
+          setError("路由器密码错误，请重试")
+        } else if (resp == "success") {
+
+          const devId = ProvisionService.getDevId()
+
+          if (!devId) {
+            setError("未获取到设备编号，请重试");
+            return;
+          }
+
+          setLoading("等待平台重启");
+
+          await wait(15000);
+
+          navigation.navigate(ScreenNames.ProvisionFinishScreen, {
+            isSuccess: true,
+            devId,
+          });
+        }
+      } else {
+        // Setting to Access Point
+        if (!accessPointName.trim()) {
+          toast.fail("失败", "请输入热点名称");
+          return;
+        }
+
+        setLoading("正在设置平台热点")
+        const resp = await ProvisionService.setupAccessPoint(
+          accessPointName.trim(),
+          wifiPassword
+        );
+
+        if (resp === "error") {
+          toast.fail("失败", "设置平台热点失败");
+        } else {
+          const devId = ProvisionService.getDevId();
+          navigation.navigate(ScreenNames.ProvisionFinishScreen, {
+            isSuccess: true,
+            devId,
+          });
+        }
       }
-      const resp = await ProvisionService.ssidConnect(router.ssid, wifiPassword);
-      if (resp == "AUTH_FAILED") {
-        setError("路由器密码错误，请重试")
-      } else if (resp == "success") {
-        navigation.navigate(ScreenNames.ProvisionFinishScreen, {
-          isSuccess: true,
-        });
-      }
-      console.log(`Jay debug: ${resp}`)
+
     } catch (error) {
       console.log("ERROR CONNECTING => ", error);
-      toast.fail("失败", "连接路由器失败");
+      toast.fail("失败", mode === "station" ? "连接路由器失败" : "设置平台热点失败");
     } finally {
       setLoading("");
     }
@@ -69,7 +145,7 @@ const SetWifiPasswordScreen = ({ navigation, route }: any) => {
     <MainContainer mainContainerStyle={{ backgroundColor: "#FFFFFF" }}>
       <MainHeader
         back
-        title="路由器信息"
+        title={mode === "station" ? "路由器信息" : "平台热点信息"}
         mainContainerStyle={{
           paddingVertical: 0,
         }}
@@ -104,16 +180,16 @@ const SetWifiPasswordScreen = ({ navigation, route }: any) => {
                 topSpacing={24}
                 bottomSpacing={28}
               >
-                请输入路由器Wi-Fi密码
+                {mode === "station" ? "请输入路由器Wi-Fi密码" : "请设置平台热点名称和密码"}
               </Text>
               <InfoFieldComp
-                title="路由器名称"
+                title={mode === "station" ? "路由器名称" : "平台热点名称"}
                 height={120}
                 children={
                   <CustomTextInput
-                    placeholder="路由器名称"
-                    value={router?.ssid ?? ""}
-                    setValue={() => undefined}
+                    placeholder={mode === "station" ? "路由器名称" : "输入平台热点名称"}
+                    value={mode === "station" ? (router?.ssid ?? "") : accessPointName}
+                    setValue={mode === "station" ? () => undefined : setAccessPointName}
                     backgroundColor={AppTheme.White}
                     placeholderTextColor={AppTheme.fontGray}
                     bold
@@ -122,7 +198,7 @@ const SetWifiPasswordScreen = ({ navigation, route }: any) => {
                     topSpacing={10}
                     radius={10}
                     height={50}
-                    disable={true}
+                    disable={mode === "station"}
                   />
                 }
               />
@@ -151,7 +227,7 @@ const SetWifiPasswordScreen = ({ navigation, route }: any) => {
             </View>
 
             <PrimaryButton
-              title="连接"
+              title={mode === "station" ? "连接" : "创建热点"}
               customStyles={styles.submitButton}
               onPress={handleApply}
             />
@@ -161,14 +237,14 @@ const SetWifiPasswordScreen = ({ navigation, route }: any) => {
       <Loader visible={!!loading} text={loading} />
       <ConnectionStatusModal
         isVisible={!!error}
-        onClose={handleOnClose}
+        onClose={handleCancel}
         icon={Images.failWifi}
         title={"无法连接到路由器"}
         description={error}
-        onRetry={handleOnClose}
+        onRetry={handleRetry}
       />
     </MainContainer>
   );
 };
 
-export default SetWifiPasswordScreen;
+export default ProvisionSetWifiPasswordScreen;

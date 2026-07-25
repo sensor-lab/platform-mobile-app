@@ -65,22 +65,33 @@ class WebsocketService {
   private connected = false;
   private connectResolve: ((str: string) => void) | null = null;
   private connectReject: ((err: Error) => void) | null = null;
+  private closeResolve: (() => void) | null = null;
+
   private constructor() {
     this.ws = WebSocketWithSelfSignedCert.getInstance(this.url);
-    this.ws.onBinaryMessage(this.handleBinaryMessage);
-    this.ws.onClose(() => {
+    this.bindSocketListeners(this.ws);
+  }
+
+  private bindSocketListeners(ws: WebSocketWithSelfSignedCert): void {
+    ws.onBinaryMessage(this.handleBinaryMessage);
+    ws.onClose(() => {
       console.log("websocket closed!");
       this.connected = false;
+      if (this.closeResolve) {
+        this.closeResolve();
+        this.closeResolve = null;
+      }
     });
-    this.ws.onOpen(() => {
+    ws.onOpen(() => {
       console.log("websocket opened!");
       this.connected = true;
       if (this.connectResolve) {
+        console.log(`connectResolved!`)
         this.connectResolve("connected");
         this.resetConnectPromise();
       }
     });
-    this.ws.onError((err) => {
+    ws.onError((err) => {
       console.log(`websocket error!: ${err}`);
       this.connected = false;
       if (this.connectReject) {
@@ -90,13 +101,19 @@ class WebsocketService {
     });
   }
 
+  private reinitializeSocket(): void {
+    this.ws = WebSocketWithSelfSignedCert.getInstance(this.url);
+    this.bindSocketListeners(this.ws);
+  }
+
   private resetConnectPromise(): void {
     this.connectResolve = null;
     this.connectReject = null;
   }
 
-  private handleBinaryMessage = (data: string): void => {
-    const bb = new flatbuffers.ByteBuffer(base64ToUint8(data));
+  private handleBinaryMessage = (data: string | Uint8Array): void => {
+    const payload = typeof data === "string" ? base64ToUint8(data) : data;
+    const bb = new flatbuffers.ByteBuffer(payload);
     const envelope = FlatbuffersEnvelope.getRootAsFlatbuffersEnvelope(bb);
 
     let bytes = envelope.topicArray(); // Uint8Array | null
@@ -118,7 +135,7 @@ class WebsocketService {
     if (!pending) {
       const callback = this.callbacks.get(txid);
       if (callback) {
-        const shouldUnregister = callback(base64ToUint8(data));
+        const shouldUnregister = callback(payload);
         if (shouldUnregister) {
           this.callbacks.delete(txid);
         }
@@ -133,7 +150,7 @@ class WebsocketService {
 
     clearTimeout(pending.timeout);
     this.pending.delete(txid);
-    pending.resolve(base64ToUint8(data));
+    pending.resolve(payload);
   };
 
   public registerCallback(txid: string, callback: BinaryMessageCallback): void {
@@ -274,6 +291,10 @@ class WebsocketService {
     return builder.asUint8Array();
   }
 
+  public isConnected(): boolean {
+    return this.connected;
+  }
+
   public connect(): Promise<string> {
     if (this.connected) return Promise.resolve("already connected");
     return new Promise((resolve, reject) => {
@@ -301,8 +322,24 @@ class WebsocketService {
     });
   }
 
-  public close(): void {
-    this.ws.close();
+  public close(timeoutMs: number = 3000): Promise<void> {
+    if (!this.connected) return Promise.resolve();
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        console.warn("ws.close(): onClose did not fire, resolving by timeout");
+        this.connected = false;
+        this.closeResolve = null;
+        resolve();
+      }, timeoutMs);
+      this.closeResolve = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+      this.ws.close();
+      // Library close() removes listeners from current instance.
+      // Prepare a fresh instance for the next connect() call.
+      this.reinitializeSocket();
+    });
   }
 
   public sendSubscribe(
@@ -492,7 +529,7 @@ class WebsocketService {
   public async executeCommand(devID: string, payload: string): Promise<string> {
     const txid = uuidv4();
     const respTopic = `platform.ephemeral.${devID}-${txid}`;
-    const queueName = `platform.${devID}`;
+    const queueName = respTopic;
     const subResp = await this.sendSubscribe(
       respTopic,
       txid,
@@ -550,8 +587,8 @@ class WebsocketService {
 
   public async queryStatus(devID: string): Promise<{ status: number[] }> {
     const txid = uuidv4();
-    const queueName = `platform.${devID}`;
     const respTopic = `platform.ephemeral.${devID}-${txid}`;
+    const queueName = respTopic;
     const subResp = await this.sendSubscribe(
       respTopic,
       txid,
@@ -617,8 +654,8 @@ class WebsocketService {
     rssi: number;
   }> {
     const txid = uuidv4();
-    const queueName = `platform.${devID}`;
     const respTopic = `platform.ephemeral.${devID}-${txid}`;
+    const queueName = respTopic;
     const subResp = await this.sendSubscribe(
       respTopic,
       txid,
@@ -710,8 +747,8 @@ class WebsocketService {
     onUpdate?: BinaryMessageCallback,
   ): Promise<string> {
     const txid = uuidv4()
-    const queueName = `platform.${devID}`;
     const respTopic = `platform.ephemeral.${devID}-${txid}`;
+    const queueName = respTopic;
     const subResp = await this.sendSubscribe(
       respTopic,
       txid,

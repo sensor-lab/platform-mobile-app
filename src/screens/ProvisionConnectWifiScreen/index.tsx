@@ -26,7 +26,7 @@ type WifiNetwork = {
   ssid: string;
 };
 
-export default function ConnectWifiScreen({ navigation }: any) {
+export default function ProvisionConnectWifiScreen({ navigation }: any) {
   const [connectedWifi, setConnectedWifi] = useState<WifiNetwork | null>(null);
   const [scannedWifis, setScannedWifis] = useState<WifiNetwork[]>([]);
   const { AppTheme } = useTheme();
@@ -37,7 +37,8 @@ export default function ConnectWifiScreen({ navigation }: any) {
     if (!connectedWifi) {
       return toast.fail("Fail", "Please select network!");
     } else {
-      navigation.navigate(ScreenNames.SetWifiPasswordScreen, {
+      navigation.navigate(ScreenNames.ProvisionSetWifiPasswordScreen, {
+        mode: "station",
         wifi: connectedWifi,
       });
     }

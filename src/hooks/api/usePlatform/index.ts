@@ -29,8 +29,9 @@ export const usePlatform = (
       if (!id) throw new Error("Invalid ID to query cloud");
 
       const ws = WebsocketService.getInstance();
-      const str = await ws.connect();
-      console.log(`websocket connect result: ${str}`)
+      if (!ws.isConnected()) {
+        await ws.connect();
+      }
       return ws.queryStatus(id);
     },
     enabled: !!id,
