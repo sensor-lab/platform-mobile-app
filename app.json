@@ -11,6 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.sensorsparks.mobileapp",
+      "entitlements": {
+        "com.apple.developer.networking.HotspotConfiguration": true,
+        "com.apple.developer.networking.wifi-info": true
+      },
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -23,7 +27,8 @@
               "NSExceptionRequiresForwardSecrecy": false
             }
           }
-        }
+        },
+        "NSLocalNetworkUsageDescription": "Allow $(PRODUCT_NAME) to communicate with devices on your local network while provisioning."
       }
     },
     "android": {
@@ -58,6 +63,14 @@
           "transport": "softap",
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location while provisioning over Wi-Fi.",
           "localNetworkPermission": "Allow $(PRODUCT_NAME) to communicate with devices on your local network while provisioning."
+        }
+      ],
+      [
+        "react-native-permissions",
+        {
+          "iosPermissions": [
+            "LocationWhenInUse"
+          ]
         }
       ]
     ],
