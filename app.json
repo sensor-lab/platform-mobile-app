@@ -28,6 +28,7 @@
             }
           }
         },
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to use the camera to scan QR code to fetch provision data.",
         "NSLocalNetworkUsageDescription": "Allow $(PRODUCT_NAME) to communicate with devices on your local network while provisioning."
       }
     },
