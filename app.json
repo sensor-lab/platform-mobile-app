@@ -2,7 +2,7 @@
   "expo": {
     "name": "赛灵森创意盒",
     "slug": "sensorsparks-mobile-app",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/splash_icon_220_220_background.png",
     "scheme": "sensorsparksmobileapp",
