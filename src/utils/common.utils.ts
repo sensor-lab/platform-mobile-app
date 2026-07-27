@@ -150,6 +150,8 @@ const isNumberWithDashed = /^[0-9-]+$/;
 const ssnRegex = /^\d{3}-\d{2}-\d{4}$/;
 const latLongRegex = /^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/;
 
+export type ProvisionMode = "station" | "accesspoint";
+
 export default {
   objectContainsKey,
   handleScrollToBottom,

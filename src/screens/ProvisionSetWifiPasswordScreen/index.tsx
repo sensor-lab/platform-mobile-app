@@ -16,6 +16,7 @@ import {
 import { Images, ScreenNames } from "../../config";
 import { useTheme } from "../../hooks";
 import { ProvisionService } from "../../services/provision_service";
+import type { ProvisionMode } from "../../utils/common.utils";
 import { toast } from "../../utils/toast.utils";
 import { styles } from "./styles";
 
@@ -25,31 +26,7 @@ type WifiNetwork = {
   ssid: string;
 };
 
-type ProvisionMode = "station" | "accesspoint";
-
-const STATUS_POLL_INTERVAL_MS = 15000;
-const STATUS_POLL_TIMEOUT_MS = 3 * 60 * 1000;
-
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const waitForInternet = (timeoutMs: number = STATUS_POLL_TIMEOUT_MS): Promise<void> =>
-  new Promise((resolve, reject) => {
-    const deadline = Date.now() + timeoutMs;
-    const check = async () => {
-      const state = await NetInfo.fetch();
-      if (state.isConnected && state.isInternetReachable) {
-        resolve();
-        return;
-      }
-      if (Date.now() >= deadline) {
-        reject(new Error("Internet connection not available"));
-        return;
-      }
-      console.log("Waiting for internet connection...");
-      setTimeout(check, 2000);
-    };
-    check();
-  });
 
 const ProvisionSetWifiPasswordScreen = ({ navigation, route }: any) => {
   const { AppTheme } = useTheme();
@@ -106,12 +83,18 @@ const ProvisionSetWifiPasswordScreen = ({ navigation, route }: any) => {
           navigation.navigate(ScreenNames.ProvisionFinishScreen, {
             isSuccess: true,
             devId,
+            mode: mode,
           });
         }
       } else {
         // Setting to Access Point
         if (!accessPointName.trim()) {
           toast.fail("失败", "请输入热点名称");
+          return;
+        }
+
+        if (wifiPassword.length > 0 && wifiPassword.length < 8) {
+          toast.fail("失败", "热点密码至少需要8个字符");
           return;
         }
 
@@ -128,6 +111,7 @@ const ProvisionSetWifiPasswordScreen = ({ navigation, route }: any) => {
           navigation.navigate(ScreenNames.ProvisionFinishScreen, {
             isSuccess: true,
             devId,
+            mode: mode
           });
         }
       }

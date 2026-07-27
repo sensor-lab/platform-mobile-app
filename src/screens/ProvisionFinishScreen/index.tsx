@@ -14,6 +14,7 @@ import { useTheme } from "../../hooks";
 import { ConnectStatus, setPlatformDetailsById } from "../../redux/reducers";
 import { WebsocketService } from "../../services/payload_service";
 import { ProvisionService } from "../../services/provision_service";
+import type { ProvisionMode } from "../../utils/common.utils";
 import { toast } from "../../utils/toast.utils";
 import { PlatformSetupStepsCard } from "./components";
 import { styles } from "./styles";
@@ -24,6 +25,8 @@ const ProvisionFinishScreen = ({ navigation, route }: any) => {
   const { AppTheme } = useTheme();
   const dispatch = useDispatch();
   const isSuccess = route?.params?.isSuccess || false;
+  const mode = (route?.params?.mode as ProvisionMode | undefined) ?? "station";
+  const isAccessPointMode = mode === "accesspoint";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState("");
   let devId = route?.params?.devId || ProvisionService.getDevId();
@@ -39,6 +42,13 @@ const ProvisionFinishScreen = ({ navigation, route }: any) => {
   };
 
   const handleNext = async () => {
+    if (isAccessPointMode) {
+      navigation.replace(ScreenNames.MainScreen, {
+        setup: "completed",
+      });
+      return;
+    }
+
     setError("");
     setLoading("正在连接云服务器...");
 
@@ -124,7 +134,9 @@ const ProvisionFinishScreen = ({ navigation, route }: any) => {
           leftSpacing={15}
           rightSpacing={15}
         >
-          您的平台已成功连接到路由器
+          {isAccessPointMode
+            ? "您的平台热点已创建成功"
+            : "您的平台已成功连接到路由器"}
         </Text>
         <CustomImage
           source={isSuccess ? Images.platform : Images.platform}
@@ -140,14 +152,18 @@ const ProvisionFinishScreen = ({ navigation, route }: any) => {
           <PlatformSetupStepsCard
             isActive={isSuccess}
             icon={Images.wifi}
-            text="连接到WiFi路由器"
+            text={isAccessPointMode ? "创建平台热点" : "连接到WiFi路由器"}
           />
-          <VerticalLine />
-          <PlatformSetupStepsCard
-            isActive={false}
-            icon={Images.provisionFinishInternetConnect}
-            text="测试和平台云连接"
-          />
+          {!isAccessPointMode && (
+            <>
+              <VerticalLine />
+              <PlatformSetupStepsCard
+                isActive={false}
+                icon={Images.provisionFinishInternetConnect}
+                text="测试和平台云连接"
+              />
+            </>
+          )}
         </View>
       </View>
 
