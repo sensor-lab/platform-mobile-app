@@ -6,6 +6,7 @@ import {
   PlatformDetails,
   removePlatformByID,
 } from "@/src/redux/reducers";
+import { createApConnectService } from "@/src/services/ap_connect_service";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Pressable, View } from "react-native";
@@ -22,39 +23,46 @@ const PairedDevicesComp = ({
   setShowRemoveButton: any;
 }) => {
   const { AppTheme } = useTheme();
-  const { id, mdnsName, platformStatus, connectStatus } = data;
+  const { id, mdnsName, platformStatus, connectStatus, provision, apSsid, apPassword } = data;
   const dispatch = useDispatch();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const handleNavigation = () => {
+  const handleNavigation = async () => {
     setShowRemoveButton(null);
+
+    if (provision === "accesspoint") {
+      const apService = createApConnectService(apSsid);
+      await apService.connect(apPassword);
+      navigation.navigate(ScreenNames.HttpServerWebView, {
+        ip: "192.168.4.1",
+      });
+      return;
+    }
+
     navigation.navigate(ScreenNames.PlatformSettingScreen, { id });
   };
 
-  const queryPlatform = usePlatform(id);
-  useSyncPlatformStatus(id, {
-    data: queryPlatform.data,
-    isError: queryPlatform.isError,
-    error: queryPlatform.error,
-  });
+  const isStationMode = provision === "station";
 
   const handleRemovePlatform = () => {
     dispatch(removePlatformByID(id));
   };
 
   const { colorOnStatusChange, statusName } =
-    connectStatus == ConnectStatus.Connecting
-      ? { colorOnStatusChange: AppTheme.fontGray, statusName: "连接中" }
-      : connectStatus == ConnectStatus.DeviceDown
-      ? { colorOnStatusChange: AppTheme.fontGray, statusName: "设备离线" }
-      : connectStatus == ConnectStatus.CloudServerDown
-        ? { colorOnStatusChange: AppTheme.fontGray, statusName: "服务器异常" }
-        : platformStatus.length == 0
-          ? { colorOnStatusChange: AppTheme.lightGreen, statusName: "正常" }
-          : platformStatus.length == 1
-            ? { colorOnStatusChange: AppTheme.Yellow, statusName: "警告" }
-            : platformStatus.length == 2
-              ? { colorOnStatusChange: AppTheme.Red, statusName: "错误" }
-              : { colorOnStatusChange: AppTheme.fontGray, statusName: "未知" };
+    provision == "accesspoint"
+      ? { colorOnStatusChange: AppTheme.Yellow, statusName: "路由器模式" }
+      : connectStatus == ConnectStatus.Connecting
+        ? { colorOnStatusChange: AppTheme.fontGray, statusName: "连接中" }
+        : connectStatus == ConnectStatus.DeviceDown
+          ? { colorOnStatusChange: AppTheme.fontGray, statusName: "设备离线" }
+          : connectStatus == ConnectStatus.CloudServerDown
+            ? { colorOnStatusChange: AppTheme.fontGray, statusName: "服务器异常" }
+            : platformStatus.length == 0
+              ? { colorOnStatusChange: AppTheme.lightGreen, statusName: "正常" }
+              : platformStatus.length == 1
+                ? { colorOnStatusChange: AppTheme.Yellow, statusName: "警告" }
+                : platformStatus.length == 2
+                  ? { colorOnStatusChange: AppTheme.Red, statusName: "错误" }
+                  : { colorOnStatusChange: AppTheme.fontGray, statusName: "未知" };
 
   return (
     <View
@@ -67,6 +75,7 @@ const PairedDevicesComp = ({
         },
       ]}
     >
+      {isStationMode ? <StationModeStatus id={id} /> : null}
       <Pressable
         style={[
           {
@@ -147,7 +156,19 @@ const PairedDevicesComp = ({
   );
 };
 
-const RemoveComp = ({ handleRemove }) => {
+const StationModeStatus = ({ id }: { id: string }) => {
+  const queryPlatform = usePlatform(id, undefined, false);
+
+  useSyncPlatformStatus(id, {
+    data: queryPlatform.data,
+    isError: queryPlatform.isError,
+    error: queryPlatform.error,
+  });
+
+  return null;
+};
+
+const RemoveComp = ({ handleRemove }: { handleRemove: () => void }) => {
   const { AppTheme } = useTheme();
   return (
     <Pressable style={styles.removeCompContainer} onPress={handleRemove}>

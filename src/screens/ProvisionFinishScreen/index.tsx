@@ -26,6 +26,8 @@ const ProvisionFinishScreen = ({ navigation, route }: any) => {
   const dispatch = useDispatch();
   const isSuccess = route?.params?.isSuccess || false;
   const mode = (route?.params?.mode as ProvisionMode | undefined) ?? "station";
+  const apSsid = (route?.params?.apSsid as string | undefined) ?? "";
+  const apPassword = (route?.params?.apPassword as string | undefined) ?? "";
   const isAccessPointMode = mode === "accesspoint";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState("");
@@ -43,6 +45,28 @@ const ProvisionFinishScreen = ({ navigation, route }: any) => {
 
   const handleNext = async () => {
     if (isAccessPointMode) {
+      if (devId) {
+        dispatch(
+          setPlatformDetailsById({
+            id: devId,
+            details: {
+              id: devId,
+              mdnsName: apSsid,
+              fwVersion: "",
+              hardwareVersion: "",
+              voltage: 0,
+              platformStatus: [],
+              tmzoneoffset: 0,
+              rssi: 0,
+              provision: mode,
+              apSsid,
+              apPassword,
+              connectStatus: ConnectStatus.DeviceDown,
+            },
+          }),
+        );
+      }
+
       navigation.replace(ScreenNames.MainScreen, {
         setup: "completed",
       });
@@ -94,6 +118,9 @@ const ProvisionFinishScreen = ({ navigation, route }: any) => {
               platformStatus: statusConfig.status,
               tmzoneoffset: statusConfig.tmzoneoffset,
               rssi: statusConfig.rssi,
+              provision: mode,
+              apSsid,
+              apPassword,
               connectStatus: ConnectStatus.Online,
             },
           }),

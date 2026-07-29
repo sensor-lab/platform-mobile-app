@@ -1,7 +1,6 @@
 import { ScreenNames } from "@/src/config";
 import { ConnectStatus, setPlatformDetailsById } from "@/src/redux/reducers";
 import { WebsocketService } from "@/src/services/payload_service";
-import { ProvisionService } from "@/src/services/provision_service";
 import { toast } from "@/src/utils/toast.utils";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
@@ -18,7 +17,12 @@ import { useTheme } from "../../hooks";
 import { usePermission } from "../../hooks/usePermission";
 import { SD } from "../../utils";
 
-const PlatformSetupScreen = ({ navigation, route }) => {
+type PlatformSetupScreenProps = {
+  navigation: any;
+  route: any;
+};
+
+const PlatformSetupScreen = ({ navigation, route }: PlatformSetupScreenProps) => {
   const [platformID, setPlatformID] = useState("");
   const { AppTheme } = useTheme();
   const { checkAndRequestPermission } = usePermission("wifi");
@@ -31,27 +35,17 @@ const PlatformSetupScreen = ({ navigation, route }) => {
   }, []);
 
   const handleTestConnection = async () => {
-    // console.log(`Test connection for ${platformID}`);
-    // const payload = '{"event":"now","actions":[["gpio", "led", "output", 2]]}';
-    // const ws = WebsocketService.getInstance();
-    // setLoading("连接测试中");
-    // try {
-    //   await ws.executeCommand(platformID, payload);
-    //   toast.success("成功翻转绿色创意盒LED灯");
-    // } catch (err) {
-    //   toast.fail("失败", "测试连接失败");
-    // }
-    // setLoading(null);
-    // Method 1.
-    // Get devices...
-    const hasPermission = await checkAndRequestPermission();
-    if (!hasPermission) {
-      toast.fail("失败", "需要位置权限才能连接 Wi-Fi 设备");
-      return;
+    console.log(`Test connection for ${platformID}`);
+    const payload = '{"event":"now","actions":[["gpio", "led", "output", 2]]}';
+    const ws = WebsocketService.getInstance();
+    setLoading("连接测试中");
+    try {
+      await ws.executeCommand(platformID, payload);
+      toast.success("成功翻转绿色创意盒LED灯");
+    } catch (err) {
+      toast.fail("失败", "测试连接失败");
     }
-
-    console.log("ESP provisioining!")
-    await ProvisionService.connect()
+    setLoading(null);
   };
 
   const handleAddDevice = async () => {
@@ -78,6 +72,9 @@ const PlatformSetupScreen = ({ navigation, route }) => {
             platformStatus: statusConfig.status,
             tmzoneoffset: statusConfig.tmzoneoffset,
             rssi: statusConfig.rssi,
+            provision: "station",
+            apSsid: "",
+            apPassword: "",
             connectStatus: ConnectStatus.Online,
           },
         }),
@@ -172,7 +169,7 @@ const PlatformSetupScreen = ({ navigation, route }) => {
         onPress={handleAddDevice}
       />
       <PrimaryButton title="测试连接" onPress={handleTestConnection} />
-      <Loader visible={!!loading} text={loading} />
+      <Loader visible={!!loading} text={loading ?? undefined} />
     </MainContainer>
   );
 };

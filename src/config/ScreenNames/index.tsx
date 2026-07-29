@@ -4,7 +4,7 @@ export const ScreenNames = {
   PlatformSettingScreen: "PlatformSetting",
   PlatformInfoScreen: "PlatformInfo",
   TestAppScreen: "TestApp",
-  HttpServerWebView: "HttpServer",
+  HttpServerWebView: "HttpServerWebView",
   LedStripController: "LedStripController",
   EnvironmentMonitorScreen: "EnvironmentMonitor",
   RemoteCameraScreen: "RemoteCamera",

@@ -10,6 +10,7 @@ import { ScreenNames } from "./src/config";
 import { persistor, store } from "./src/redux";
 import {
   EnvironmentMonitorScreen,
+  HttpServerWebView,
   LedStripController,
   MainScreen,
   PlatformInfoScreen,
@@ -77,6 +78,10 @@ export default function App() {
                   <Stack.Screen
                     name={ScreenNames.TestAppScreen}
                     component={TestAppScreen}
+                  />
+                  <Stack.Screen
+                    name={ScreenNames.HttpServerWebView}
+                    component={HttpServerWebView}
                   />
                   <Stack.Screen
                     name={ScreenNames.LedStripController}

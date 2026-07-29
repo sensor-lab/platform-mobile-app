@@ -9,6 +9,7 @@ import { Linking, Pressable, ScrollView, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { Images, ScreenNames } from "../../config";
 import { useTheme } from "../../hooks";
+import { usePermission } from "../../hooks/usePermission";
 import { SD } from "../../utils";
 import {
   CustomImage,
@@ -22,10 +23,11 @@ import { MainScreenOptionsCard, PairedDevicesComp } from "./components";
 import { opetionsData } from "./extra/data";
 import { styles } from "./styles";
 
-function MainScreen({ navigation }) {
+function MainScreen({ navigation }: { navigation: any }) {
   const { AppTheme } = useTheme();
   const dispatch = useDispatch();
   const { platformDetailsByID } = useSelector((state: any) => state.platform);
+  const { checkAndRequestPermission } = usePermission("wifi");
   const [setup, setSetup] = useState<PlatformDetails[]>([]);
   const [showRemoveButton, setShowRemoveButton] = useState(null);
   const hasInitializedConnectStatus = useRef(false);
@@ -71,11 +73,10 @@ function MainScreen({ navigation }) {
   }, [platformDetailsByID]);
 
   const handleAddNow = () => {
-    // navigation.navigate(ScreenNames.PlatformSetupScreen);
     navigation.navigate(ScreenNames.ProvisionStartScreen);
   };
 
-  const handleOpenLink = (link, heading) => {
+  const handleOpenLink = (link: string) => {
     return Linking.openURL(link);
   };
 
@@ -92,12 +93,16 @@ function MainScreen({ navigation }) {
             onPress={() => setShowRemoveButton(null)}
             containerStyles={[
               styles.sectionContainerStyles,
-              setup.length && {
-                flexDirection: "column",
-                justifyContent: "flex-start",
-                paddingHorizontal: SD.wp(0),
-                alignItems: "center",
-              },
+              ...(setup.length > 0
+                ? [
+                  {
+                    flexDirection: "column",
+                    justifyContent: "flex-start",
+                    paddingHorizontal: SD.wp(0),
+                    alignItems: "center",
+                  } as const,
+                ]
+                : []),
             ]}
           >
             {setup.length > 0 ? (
@@ -153,7 +158,7 @@ function MainScreen({ navigation }) {
                 heading={item.heading}
                 subHeading={item.subHeading}
                 key={index}
-                onPress={handleOpenLink.bind(this, item.link, item?.heading)}
+                onPress={() => handleOpenLink(item.link)}
               />
             ))}
           </View>

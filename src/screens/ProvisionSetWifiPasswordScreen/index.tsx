@@ -83,7 +83,9 @@ const ProvisionSetWifiPasswordScreen = ({ navigation, route }: any) => {
           navigation.navigate(ScreenNames.ProvisionFinishScreen, {
             isSuccess: true,
             devId,
-            mode: mode,
+            mode,
+            apSsid: "",
+            apPassword: "",
           });
         }
       } else {
@@ -111,7 +113,9 @@ const ProvisionSetWifiPasswordScreen = ({ navigation, route }: any) => {
           navigation.navigate(ScreenNames.ProvisionFinishScreen, {
             isSuccess: true,
             devId,
-            mode: mode
+            mode,
+            apSsid: accessPointName.trim(),
+            apPassword: wifiPassword,
           });
         }
       }

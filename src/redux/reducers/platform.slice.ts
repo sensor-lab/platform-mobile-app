@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { ProvisionMode } from "../../utils/common.utils";
 
 export enum ConnectStatus {
   Connecting = "connecting",
@@ -17,6 +18,9 @@ export type PlatformDetails = {
   connectStatus: ConnectStatus;
   tmzoneoffset: number;
   rssi: number;
+  provision: ProvisionMode;
+  apSsid: string;
+  apPassword: string;
 };
 
 export type PlatformStateType = {
