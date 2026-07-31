@@ -41,8 +41,6 @@ const PairedDevicesComp = ({
     navigation.navigate(ScreenNames.PlatformSettingScreen, { id });
   };
 
-  const isStationMode = provision === "station";
-
   const handleRemovePlatform = () => {
     dispatch(removePlatformByID(id));
   };
@@ -75,7 +73,7 @@ const PairedDevicesComp = ({
         },
       ]}
     >
-      {isStationMode ? <StationModeStatus id={id} /> : null}
+      {provision === "station" ? <StationModeStatus id={id} /> : null}
       <Pressable
         style={[
           {

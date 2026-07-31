@@ -36,7 +36,7 @@ export const MainHeader: React.FC<BackHeaderProps> = ({
 
   const handleGoBack = () => navigation.goBack();
   const handleAddPlatform = () =>
-    navigation.navigate(ScreenNames.PlatformSetupScreen);
+    navigation.navigate(ScreenNames.ProvisionStartScreen);
 
   return (
     <SafeAreaView
