@@ -15,7 +15,7 @@ import { ConnectStatus } from "@/src/redux/reducers";
 import { WebsocketService } from "@/src/services/payload_service";
 import CommonUtils from "@/src/utils/common.utils";
 import { useEffect, useState } from "react";
-import { Linking, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux";
 import { SD } from "../../utils";
@@ -130,7 +130,9 @@ const PlatformSettingScreen = ({ navigation, route }) => {
         });
         break;
       case "HTTP服务器":
-        Linking.openURL("http://192.168.1.187");
+        navigation.navigate(ScreenNames.HttpServerWebView, {
+          ip: platformDetail.ip,
+        });
         break;
       case "添加应用":
         setShowAddAppsModal(true);

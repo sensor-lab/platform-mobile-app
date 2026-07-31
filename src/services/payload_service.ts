@@ -652,6 +652,7 @@ class WebsocketService {
     hwver: string;
     tmzoneoffset: number;
     rssi: number;
+    ipaddr: string;
   }> {
     const txid = uuidv4();
     const respTopic = `platform.ephemeral.${devID}-${txid}`;

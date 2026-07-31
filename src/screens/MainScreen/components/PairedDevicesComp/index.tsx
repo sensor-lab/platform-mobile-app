@@ -23,7 +23,7 @@ const PairedDevicesComp = ({
   setShowRemoveButton: any;
 }) => {
   const { AppTheme } = useTheme();
-  const { id, mdnsName, platformStatus, connectStatus, provision, apSsid, apPassword } = data;
+  const { id, mdnsName, platformStatus, connectStatus, provision, apSsid, apPassword, ip } = data;
   const dispatch = useDispatch();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const handleNavigation = async () => {
@@ -33,7 +33,7 @@ const PairedDevicesComp = ({
       const apService = createApConnectService(apSsid);
       await apService.connect(apPassword);
       navigation.navigate(ScreenNames.HttpServerWebView, {
-        ip: "192.168.4.1",
+        ip: ip,
       });
       return;
     }

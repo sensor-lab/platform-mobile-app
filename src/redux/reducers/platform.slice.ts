@@ -18,6 +18,7 @@ export type PlatformDetails = {
   connectStatus: ConnectStatus;
   tmzoneoffset: number;
   rssi: number;
+  ip: string;
   provision: ProvisionMode;
   apSsid: string;
   apPassword: string;
