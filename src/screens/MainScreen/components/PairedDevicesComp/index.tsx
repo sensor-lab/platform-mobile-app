@@ -1,4 +1,4 @@
-import { CustomImage, Text } from "@/src/components";
+import { CustomImage, CustomModal, PrimaryButton, Text } from "@/src/components";
 import { Images, ScreenNames } from "@/src/config";
 import { usePlatform, useSyncPlatformStatus, useTheme } from "@/src/hooks";
 import {
@@ -9,6 +9,7 @@ import {
 import { createApConnectService } from "@/src/services/ap_connect_service";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { useDispatch } from "react-redux";
 import { styles } from "./styles";
@@ -26,19 +27,25 @@ const PairedDevicesComp = ({
   const { id, mdnsName, platformStatus, connectStatus, provision, apSsid, apPassword, ip } = data;
   const dispatch = useDispatch();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const [showAccessPointConfirm, setShowAccessPointConfirm] = useState(false);
   const handleNavigation = async () => {
     setShowRemoveButton(null);
 
     if (provision === "accesspoint") {
-      const apService = createApConnectService(apSsid);
-      await apService.connect(apPassword);
-      navigation.navigate(ScreenNames.HttpServerWebView, {
-        ip: ip,
-      });
+      setShowAccessPointConfirm(true);
       return;
     }
 
     navigation.navigate(ScreenNames.PlatformSettingScreen, { id });
+  };
+
+  const handleConfirmAccessPoint = async () => {
+    setShowAccessPointConfirm(false);
+    const apService = createApConnectService(apSsid);
+    await apService.connect(apPassword);
+    navigation.navigate(ScreenNames.HttpServerWebView, {
+      ip: ip,
+    });
   };
 
   const handleRemovePlatform = () => {
@@ -68,7 +75,7 @@ const PairedDevicesComp = ({
         styles.container,
         {
           backgroundColor: AppTheme.White,
-          opacity: connectStatus != ConnectStatus.Online ? 0.6 : 1,
+          opacity: connectStatus != ConnectStatus.Online && provision != "accesspoint" ? 0.6 : 1,
           // opacity: 0.2,
         },
       ]}
@@ -150,6 +157,40 @@ const PairedDevicesComp = ({
       {showRemoveButton == id && (
         <RemoveComp handleRemove={handleRemovePlatform} />
       )}
+      <CustomModal
+        isVisible={showAccessPointConfirm}
+        onClose={() => setShowAccessPointConfirm(false)}
+      >
+        <View
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderRadius: 16,
+            paddingHorizontal: 20,
+            paddingVertical: 24,
+            width: "90%",
+            alignItems: "center",
+          }}
+        >
+          <Text bold size={18} centered>
+            连接平台热点
+          </Text>
+          <Text
+            regular
+            size={14}
+            centered
+            color={AppTheme.fontGray}
+            topSpacing={12}
+            bottomSpacing={20}
+          >
+            请靠近平台，点击确定后，会自动连接设备WiFi至平台热点，并进入控制台。
+          </Text>
+          <PrimaryButton
+            title="确定"
+            onPress={handleConfirmAccessPoint}
+            customStyles={{ width: "100%", borderRadius: 14 }}
+          />
+        </View>
+      </CustomModal>
     </View>
   );
 };
@@ -175,7 +216,7 @@ const RemoveComp = ({ handleRemove }: { handleRemove: () => void }) => {
         style={[styles.binIcon, { backgroundColor: "#FFFFFF" }]}
       />
       <Text regular size={12}>
-        Remove
+        删除
       </Text>
     </Pressable>
   );

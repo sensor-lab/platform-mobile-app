@@ -1,14 +1,12 @@
 import { WebsocketService } from "@/src/services/payload_service";
 import { ProvisionService } from "@/src/services/provision_service";
 import { toast } from "@/src/utils/toast.utils";
-import { useState } from "react";
 import { View } from "react-native";
 import {
   CustomImage,
-  Loader,
   MainContainer,
   PrimaryButton,
-  Text,
+  Text
 } from "../../components";
 import { Images, ScreenNames } from "../../config";
 import { usePermission } from "../../hooks/usePermission";
@@ -16,31 +14,25 @@ import { styles } from "./styles";
 
 const ProvisionStartScreen = ({ navigation }: any) => {
   const { checkAndRequestPermission } = usePermission("wifi");
-  const [loading, setLoading] = useState("");
 
   const handleNext = async () => {
     const hasPermission = await checkAndRequestPermission();
     if (!hasPermission) {
-      setLoading("");
       toast.fail("失败", "需要位置权限才能连接 Wi-Fi 设备");
       return;
     }
-
-    setLoading("正在和平台热点连接");
 
     console.log("close existing websocket if any")
     const ws = WebsocketService.getInstance();
     await ws.close();
 
     try {
+      toast.info("正在和平台热点连接");
       await ProvisionService.connect();
     } catch (e) {
       toast.fail("失败", "连接设备热点失败");
-      setLoading("");
       return;
     }
-
-    setLoading("");
 
     navigation.navigate(ScreenNames.ProvisionModeSelectScreen);
   };
@@ -86,7 +78,6 @@ const ProvisionStartScreen = ({ navigation }: any) => {
           onPress={handleNext}
         />
       </View>
-      <Loader visible={!!loading} text={loading} />
     </MainContainer>
   );
 };
