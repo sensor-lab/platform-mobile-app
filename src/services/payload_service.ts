@@ -297,10 +297,6 @@ class WebsocketService {
 
   public connect(): Promise<string> {
     if (this.connected) return Promise.resolve("already connected");
-
-    // Recreate the socket when the app resumes from background or after a dropped session.
-    this.reinitializeSocket();
-
     return new Promise((resolve, reject) => {
       this.connectResolve = resolve;
       this.connectReject = reject;
@@ -324,10 +320,6 @@ class WebsocketService {
           "JdMTxglzFcMZ/gOY99TZHlbSW9RYvXOP",
       });
     });
-  }
-
-  public reconnect(): Promise<string> {
-    return this.connect();
   }
 
   public close(timeoutMs: number = 3000): Promise<void> {
@@ -518,7 +510,7 @@ class WebsocketService {
 
   public waitCommandResponse(
     txid: string,
-    timeoutMs: number = 20000,
+    timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
