@@ -91,9 +91,10 @@ class WebsocketService {
         this.resetConnectPromise();
       }
     });
-    ws.onError((err) => {
-      console.log(`websocket error!: ${err}`);
+    ws.onError(async (err) => {
+      console.log(`websocket error!: ${err} and close the socket`);
       this.connected = false;
+      await this.close()
       if (this.connectReject) {
         this.connectReject(new Error(`WebSocket error: ${err}`));
         this.resetConnectPromise();
@@ -323,7 +324,6 @@ class WebsocketService {
   }
 
   public close(timeoutMs: number = 3000): Promise<void> {
-    if (!this.connected) return Promise.resolve();
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
         console.warn("ws.close(): onClose did not fire, resolving by timeout");
@@ -350,7 +350,7 @@ class WebsocketService {
     kind: TopicType,
     timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
-    if (!this.connected) return Promise.reject(new Error("not connected"));
+    if (!this.connected) return Promise.reject(new Error("服务器连接中断，请重启应用"));
     const messageId = uuidv4();
     const subscribe = this.constructSubscribe(
       topic,
@@ -388,7 +388,7 @@ class WebsocketService {
     kind: TopicType,
     timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
-    if (!this.connected) return Promise.reject(new Error("not connected"));
+    if (!this.connected) return Promise.reject(new Error("服务器连接中断，请重启应用"));
     const messageID = uuidv4();
     const newTxid = uuidv4();
     const unsubscribe = this.constructUnsubscribe(
@@ -426,7 +426,7 @@ class WebsocketService {
     payload: string,
     timeoutMs: number = 10000,
   ): Promise<Uint8Array> {
-    if (!this.connected) return Promise.reject(new Error("not connected"));
+    if (!this.connected) return Promise.reject(new Error("服务器连接中断，请重启应用"));
     const messageID = uuidv4();
     const cmdTopic = `platform.${deviceID}.command`;
     const responseTopic = `platform.ephemeral.${deviceID}-${txid}`;
@@ -469,7 +469,7 @@ class WebsocketService {
     respTopic: string = "",
     timeoutMs: number = 10000
   ): Promise<Uint8Array> {
-    if (!this.connected) return Promise.reject(new Error("not connected"));
+    if (!this.connected) return Promise.reject(new Error("服务器连接中断，请重启应用"));
     const messageID = uuidv4();
     let cmdTopic
     if (devID == "") {
@@ -515,7 +515,7 @@ class WebsocketService {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pending.delete(txid);
-        reject(new Error("WebSocket response timeout"));
+        reject(new Error("服务器数据通信超时"));
       }, timeoutMs);
 
       try {
